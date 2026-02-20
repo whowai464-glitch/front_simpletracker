@@ -4,10 +4,16 @@ import PublicRoute from '@/components/common/PublicRoute';
 import AppShellLayout from '@/components/layout/AppShellLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
-
-function Placeholder({ title }: { title: string }) {
-  return <div>{title}</div>;
-}
+import DashboardPage from '@/pages/DashboardPage';
+import TrackingPage from '@/pages/TrackingPage';
+import LeadsPage from '@/pages/crm/LeadsPage';
+import LeadDetailPage from '@/pages/crm/LeadDetailPage';
+import AutomationsPage from '@/pages/AutomationsPage';
+import DomainsPage from '@/pages/settings/DomainsPage';
+import PixelsPage from '@/pages/settings/PixelsPage';
+import WebhooksPage from '@/pages/settings/WebhooksPage';
+import AccountPage from '@/pages/settings/AccountPage';
+import ProfilePage from '@/pages/ProfilePage';
 
 export default function App() {
   return (
@@ -22,16 +28,16 @@ export default function App() {
       <Route element={<AuthGuard />}>
         <Route element={<AppShellLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Placeholder title="Dashboard" />} />
-          <Route path="/tracking" element={<Placeholder title="Tracking" />} />
-          <Route path="/crm/leads" element={<Placeholder title="Leads" />} />
-          <Route path="/crm/leads/:id" element={<Placeholder title="Lead Detail" />} />
-          <Route path="/automations" element={<Placeholder title="Automacoes" />} />
-          <Route path="/settings/domains" element={<Placeholder title="Dominios" />} />
-          <Route path="/settings/pixels" element={<Placeholder title="Pixels" />} />
-          <Route path="/settings/webhooks" element={<Placeholder title="Webhooks" />} />
-          <Route path="/settings/account" element={<Placeholder title="Conta" />} />
-          <Route path="/profile" element={<Placeholder title="Perfil" />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/tracking" element={<TrackingPage />} />
+          <Route path="/crm/leads" element={<LeadsPage />} />
+          <Route path="/crm/leads/:id" element={<LeadDetailPage />} />
+          <Route path="/automations" element={<AutomationsPage />} />
+          <Route path="/settings/domains" element={<DomainsPage />} />
+          <Route path="/settings/pixels" element={<PixelsPage />} />
+          <Route path="/settings/webhooks" element={<WebhooksPage />} />
+          <Route path="/settings/account" element={<AccountPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Route>
 
