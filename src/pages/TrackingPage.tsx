@@ -52,9 +52,21 @@ import {
   useDeleteCustomParam,
   useTagScript,
 } from '@/hooks/useTags';
+import {
+  useCampaigns,
+  useCreateCampaign,
+  useUpdateCampaign,
+  useDeleteCampaign,
+} from '@/hooks/useCampaigns';
+import {
+  useAdvertisements,
+  useCreateAdvertisement,
+  useUpdateAdvertisement,
+  useDeleteAdvertisement,
+} from '@/hooks/useAdvertisements';
 import { useDomains } from '@/hooks/useDomains';
 import { usePixels } from '@/hooks/usePixels';
-import type { Tag, Pixel, PixelType } from '@/types';
+import type { Tag, Pixel, PixelType, Campaign, Advertisement, TrafficSource } from '@/types';
 
 const PIXEL_TYPE_COLORS: Record<PixelType, string> = {
   facebook: 'blue',
@@ -65,6 +77,30 @@ const PIXEL_TYPE_COLORS: Record<PixelType, string> = {
   twitter: 'cyan',
   linkedin: 'indigo',
 };
+
+const TRAFFIC_SOURCE_COLORS: Record<string, string> = {
+  google_ads: 'red',
+  meta_ads: 'blue',
+  tiktok_ads: 'dark',
+  kwai_ads: 'orange',
+  organic: 'green',
+  direct: 'violet',
+  email: 'cyan',
+  referral: 'orange',
+  other: 'gray',
+};
+
+const TRAFFIC_SOURCE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'google_ads', label: 'Google Ads' },
+  { value: 'meta_ads', label: 'Meta Ads' },
+  { value: 'tiktok_ads', label: 'TikTok Ads' },
+  { value: 'kwai_ads', label: 'Kwai Ads' },
+  { value: 'organic', label: 'Organico' },
+  { value: 'direct', label: 'Direto' },
+  { value: 'email', label: 'Email' },
+  { value: 'referral', label: 'Referencia' },
+  { value: 'other', label: 'Outro' },
+];
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('pt-BR');
@@ -108,17 +144,11 @@ export default function TrackingPage() {
           </Tabs.Panel>
 
           <Tabs.Panel value="campaigns" pt="md">
-            <EmptyState
-              message="Nenhuma campanha encontrada"
-              icon={<IconSpeakerphone size={48} color="gray" />}
-            />
+            <CampaignsTab />
           </Tabs.Panel>
 
           <Tabs.Panel value="ads" pt="md">
-            <EmptyState
-              message="Nenhum anuncio encontrado"
-              icon={<IconAdCircle size={48} color="gray" />}
-            />
+            <AdsTab />
           </Tabs.Panel>
         </Tabs>
       </Paper>
@@ -918,5 +948,506 @@ function TagDetailDrawer({
         </Paper>
       </Stack>
     </Drawer>
+  );
+}
+
+// ─── Campaigns Tab ──────────────────────────────────────────
+
+function CampaignsTab() {
+  const businessId = useSelectedBusinessId();
+  const { data: campaigns, isLoading } = useCampaigns(businessId);
+  const { data: tags } = useTags(businessId);
+  const createMutation = useCreateCampaign();
+  const updateMutation = useUpdateCampaign();
+  const deleteMutation = useDeleteCampaign();
+
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure();
+  const [deleteModalOpened, { open: openDeleteModal, close: closeDeleteModal }] = useDisclosure();
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
+
+  const form = useForm({
+    initialValues: { name: '', description: '', tag_id: '' },
+    validate: {
+      name: (v) => (v.trim() ? null : 'Nome obrigatorio'),
+    },
+  });
+
+  const handleOpenCreate = () => {
+    setEditingCampaign(null);
+    form.reset();
+    openDrawer();
+  };
+
+  const handleOpenEdit = (campaign: Campaign) => {
+    setEditingCampaign(campaign);
+    form.setValues({
+      name: campaign.name,
+      description: campaign.description ?? '',
+      tag_id: '',
+    });
+    openDrawer();
+  };
+
+  const handleCloseDrawer = () => {
+    setEditingCampaign(null);
+    form.reset();
+    closeDrawer();
+  };
+
+  const handleSubmit = form.onSubmit((values) => {
+    if (!businessId) return;
+
+    if (editingCampaign) {
+      updateMutation.mutate(
+        {
+          id: editingCampaign.id,
+          data: {
+            name: values.name,
+            description: values.description || undefined,
+          },
+        },
+        { onSuccess: handleCloseDrawer },
+      );
+    } else {
+      createMutation.mutate(
+        {
+          name: values.name,
+          description: values.description || undefined,
+          tag_id: values.tag_id || undefined,
+          business_id: businessId,
+        },
+        { onSuccess: handleCloseDrawer },
+      );
+    }
+  });
+
+  const handleDelete = (id: string) => {
+    setCampaignToDelete(id);
+    openDeleteModal();
+  };
+
+  const confirmDelete = () => {
+    if (campaignToDelete) {
+      deleteMutation.mutate(campaignToDelete, {
+        onSuccess: () => {
+          closeDeleteModal();
+          setCampaignToDelete(null);
+        },
+      });
+    }
+  };
+
+  const tagOptions = (tags ?? []).map((t) => ({ value: t.id, label: t.name }));
+
+  if (!businessId) {
+    return (
+      <EmptyState
+        message="Selecione um negocio para ver as campanhas"
+        icon={<IconSpeakerphone size={48} color="gray" />}
+      />
+    );
+  }
+
+  return (
+    <>
+      <Group justify="flex-end" mb="md">
+        <Button leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
+          Criar campanha
+        </Button>
+      </Group>
+
+      {isLoading ? (
+        <Group justify="center" p="xl"><Loader /></Group>
+      ) : !campaigns?.length ? (
+        <EmptyState
+          message="Nenhuma campanha encontrada"
+          icon={<IconSpeakerphone size={48} color="gray" />}
+        />
+      ) : (
+        <Table.ScrollContainer minWidth={500}>
+          <Table striped highlightOnHover>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Nome</Table.Th>
+                <Table.Th>Descricao</Table.Th>
+                <Table.Th>Criado em</Table.Th>
+                <Table.Th>Acoes</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {campaigns.map((campaign) => (
+                <Table.Tr key={campaign.id}>
+                  <Table.Td>
+                    <Text size="sm" fw={500}>{campaign.name}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm" c="dimmed" lineClamp={1}>
+                      {campaign.description || '—'}
+                    </Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm">{formatDate(campaign.created_at)}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Group gap="xs">
+                      <Tooltip label="Editar">
+                        <ActionIcon
+                          variant="light"
+                          size="sm"
+                          onClick={() => handleOpenEdit(campaign)}
+                        >
+                          <IconEdit size={14} />
+                        </ActionIcon>
+                      </Tooltip>
+                      <Tooltip label="Excluir">
+                        <ActionIcon
+                          variant="light"
+                          color="red"
+                          size="sm"
+                          onClick={() => handleDelete(campaign.id)}
+                        >
+                          <IconTrash size={14} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      )}
+
+      <Drawer
+        opened={drawerOpened}
+        onClose={handleCloseDrawer}
+        title={editingCampaign ? 'Editar campanha' : 'Criar campanha'}
+        position="right"
+        size="md"
+      >
+        <form onSubmit={handleSubmit}>
+          <Stack>
+            <TextInput
+              label="Nome"
+              placeholder="Nome da campanha"
+              required
+              {...form.getInputProps('name')}
+            />
+            <Textarea
+              label="Descricao"
+              placeholder="Descricao opcional"
+              {...form.getInputProps('description')}
+            />
+            {!editingCampaign && (
+              <Select
+                label="Tag"
+                placeholder="Selecione uma tag (opcional)"
+                data={tagOptions}
+                clearable
+                {...form.getInputProps('tag_id')}
+              />
+            )}
+            <Button
+              type="submit"
+              loading={createMutation.isPending || updateMutation.isPending}
+            >
+              {editingCampaign ? 'Salvar' : 'Criar'}
+            </Button>
+          </Stack>
+        </form>
+      </Drawer>
+
+      <Modal
+        opened={deleteModalOpened}
+        onClose={closeDeleteModal}
+        title="Confirmar exclusao"
+        size="sm"
+      >
+        <Stack>
+          <Text size="sm">
+            Tem certeza que deseja excluir esta campanha? Esta acao nao pode ser desfeita.
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeDeleteModal}>Cancelar</Button>
+            <Button color="red" onClick={confirmDelete} loading={deleteMutation.isPending}>
+              Excluir
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </>
+  );
+}
+
+// ─── Ads Tab ────────────────────────────────────────────────
+
+function AdsTab() {
+  const businessId = useSelectedBusinessId();
+  const { data: ads, isLoading } = useAdvertisements(businessId);
+  const { data: tags } = useTags(businessId);
+  const { data: campaigns } = useCampaigns(businessId);
+  const createMutation = useCreateAdvertisement();
+  const updateMutation = useUpdateAdvertisement();
+  const deleteMutation = useDeleteAdvertisement();
+
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure();
+  const [deleteModalOpened, { open: openDeleteModal, close: closeDeleteModal }] = useDisclosure();
+  const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
+  const [adToDelete, setAdToDelete] = useState<string | null>(null);
+
+  const form = useForm({
+    initialValues: {
+      name: '',
+      observation: '',
+      traffic_source: '',
+      tag_id: '',
+      campaign_id: '',
+    },
+    validate: {
+      name: (v) => (v.trim() ? null : 'Nome obrigatorio'),
+      traffic_source: (v) => (v ? null : 'Fonte de trafego obrigatoria'),
+    },
+  });
+
+  const handleOpenCreate = () => {
+    setEditingAd(null);
+    form.reset();
+    openDrawer();
+  };
+
+  const handleOpenEdit = (ad: Advertisement) => {
+    setEditingAd(ad);
+    form.setValues({
+      name: ad.name,
+      observation: ad.observation ?? '',
+      traffic_source: ad.traffic_source,
+      tag_id: ad.tag_id ?? '',
+      campaign_id: ad.campaign_id ?? '',
+    });
+    openDrawer();
+  };
+
+  const handleCloseDrawer = () => {
+    setEditingAd(null);
+    form.reset();
+    closeDrawer();
+  };
+
+  const handleSubmit = form.onSubmit((values) => {
+    if (!businessId) return;
+
+    if (editingAd) {
+      updateMutation.mutate(
+        {
+          id: editingAd.id,
+          data: {
+            name: values.name,
+            observation: values.observation || undefined,
+            campaign_id: values.campaign_id || undefined,
+            tag_id: values.tag_id || undefined,
+          },
+        },
+        { onSuccess: handleCloseDrawer },
+      );
+    } else {
+      createMutation.mutate(
+        {
+          name: values.name,
+          observation: values.observation || undefined,
+          traffic_source: values.traffic_source as TrafficSource,
+          tag_id: values.tag_id || undefined,
+          campaign_id: values.campaign_id || undefined,
+          business_id: businessId,
+        },
+        { onSuccess: handleCloseDrawer },
+      );
+    }
+  });
+
+  const handleDelete = (id: string) => {
+    setAdToDelete(id);
+    openDeleteModal();
+  };
+
+  const confirmDelete = () => {
+    if (adToDelete) {
+      deleteMutation.mutate(adToDelete, {
+        onSuccess: () => {
+          closeDeleteModal();
+          setAdToDelete(null);
+        },
+      });
+    }
+  };
+
+  const tagOptions = (tags ?? []).map((t) => ({ value: t.id, label: t.name }));
+  const campaignOptions = (campaigns ?? []).map((c) => ({ value: c.id, label: c.name }));
+
+  if (!businessId) {
+    return (
+      <EmptyState
+        message="Selecione um negocio para ver os anuncios"
+        icon={<IconAdCircle size={48} color="gray" />}
+      />
+    );
+  }
+
+  return (
+    <>
+      <Group justify="flex-end" mb="md">
+        <Button leftSection={<IconPlus size={16} />} onClick={handleOpenCreate}>
+          Criar anuncio
+        </Button>
+      </Group>
+
+      {isLoading ? (
+        <Group justify="center" p="xl"><Loader /></Group>
+      ) : !ads?.length ? (
+        <EmptyState
+          message="Nenhum anuncio encontrado"
+          icon={<IconAdCircle size={48} color="gray" />}
+        />
+      ) : (
+        <Table.ScrollContainer minWidth={700}>
+          <Table striped highlightOnHover>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Nome</Table.Th>
+                <Table.Th>Fonte</Table.Th>
+                <Table.Th>Campanha</Table.Th>
+                <Table.Th>Tag</Table.Th>
+                <Table.Th>Criado em</Table.Th>
+                <Table.Th>Acoes</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {ads.map((ad) => (
+                <Table.Tr key={ad.id}>
+                  <Table.Td>
+                    <Text size="sm" fw={500}>{ad.name}</Text>
+                    {ad.observation && (
+                      <Text size="xs" c="dimmed" lineClamp={1}>{ad.observation}</Text>
+                    )}
+                  </Table.Td>
+                  <Table.Td>
+                    <Badge
+                      color={TRAFFIC_SOURCE_COLORS[ad.traffic_source] ?? 'gray'}
+                      variant="light"
+                      size="sm"
+                    >
+                      {ad.traffic_source}
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm">{ad.campaign?.name ?? '—'}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm">{ad.tag?.name ?? '—'}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm">{formatDate(ad.created_at)}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Group gap="xs">
+                      <Tooltip label="Editar">
+                        <ActionIcon
+                          variant="light"
+                          size="sm"
+                          onClick={() => handleOpenEdit(ad)}
+                        >
+                          <IconEdit size={14} />
+                        </ActionIcon>
+                      </Tooltip>
+                      <Tooltip label="Excluir">
+                        <ActionIcon
+                          variant="light"
+                          color="red"
+                          size="sm"
+                          onClick={() => handleDelete(ad.id)}
+                        >
+                          <IconTrash size={14} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Group>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
+      )}
+
+      <Drawer
+        opened={drawerOpened}
+        onClose={handleCloseDrawer}
+        title={editingAd ? 'Editar anuncio' : 'Criar anuncio'}
+        position="right"
+        size="md"
+      >
+        <form onSubmit={handleSubmit}>
+          <Stack>
+            <TextInput
+              label="Nome"
+              placeholder="Nome do anuncio"
+              required
+              {...form.getInputProps('name')}
+            />
+            <Textarea
+              label="Observacao"
+              placeholder="Observacao opcional"
+              {...form.getInputProps('observation')}
+            />
+            <Select
+              label="Fonte de trafego"
+              placeholder="Selecione a fonte"
+              data={TRAFFIC_SOURCE_OPTIONS}
+              required
+              disabled={!!editingAd}
+              {...form.getInputProps('traffic_source')}
+            />
+            <Select
+              label="Tag"
+              placeholder="Selecione uma tag (opcional)"
+              data={tagOptions}
+              clearable
+              {...form.getInputProps('tag_id')}
+            />
+            <Select
+              label="Campanha"
+              placeholder="Selecione uma campanha (opcional)"
+              data={campaignOptions}
+              clearable
+              {...form.getInputProps('campaign_id')}
+            />
+            <Button
+              type="submit"
+              loading={createMutation.isPending || updateMutation.isPending}
+            >
+              {editingAd ? 'Salvar' : 'Criar'}
+            </Button>
+          </Stack>
+        </form>
+      </Drawer>
+
+      <Modal
+        opened={deleteModalOpened}
+        onClose={closeDeleteModal}
+        title="Confirmar exclusao"
+        size="sm"
+      >
+        <Stack>
+          <Text size="sm">
+            Tem certeza que deseja excluir este anuncio? Esta acao nao pode ser desfeita.
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={closeDeleteModal}>Cancelar</Button>
+            <Button color="red" onClick={confirmDelete} loading={deleteMutation.isPending}>
+              Excluir
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </>
   );
 }
