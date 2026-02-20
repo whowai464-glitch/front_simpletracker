@@ -1,6 +1,5 @@
 export interface Webhook {
   id: string;
-  workspace_id: string;
   business_id: string;
   event_type: string;
   url: string;

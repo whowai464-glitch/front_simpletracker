@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "senna-cloud": {
+      "type": "sse",
+      "url": "http://senna-mcp:8100/sse",
+      "headers": {
+        "Authorization": "Bearer e4abdb8485fb60d72ca813a58e191728b10b927e662c4845"
+      }
+    }
+  }
+}

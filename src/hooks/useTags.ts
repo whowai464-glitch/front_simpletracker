@@ -171,7 +171,7 @@ export function useCreateCustomParam() {
       data,
     }: {
       tagId: string;
-      data: { param_key: string; param_value: string };
+      data: { field: string; value: string };
     }) => createCustomParam(tagId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags'] });
@@ -202,7 +202,7 @@ export function useUpdateCustomParam() {
     }: {
       tagId: string;
       paramId: string;
-      data: { param_key?: string; param_value?: string };
+      data: { field?: string; value?: string };
     }) => updateCustomParam(tagId, paramId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tags'] });

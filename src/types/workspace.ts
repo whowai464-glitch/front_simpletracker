@@ -17,11 +17,15 @@ export interface WorkspaceMember {
 
 export interface Invitation {
   id: string;
-  email: string;
+  invited_email: string;
   workspace_name: string;
   invited_by_name: string;
   role: WorkspaceRole;
-  is_valid: boolean;
+  is_accepted: boolean;
+  is_revoked: boolean;
+  expires_at: string;
+  workspace_id: string;
+  invite_url: string | null;
   user_exists?: boolean;
   token?: string;
   created_at: string;

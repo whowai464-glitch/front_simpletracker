@@ -53,7 +53,7 @@ export function listCustomParams(tagId: string) {
 
 export function createCustomParam(
   tagId: string,
-  data: { param_key: string; param_value: string },
+  data: { field: string; value: string },
 ) {
   return client
     .post<TagCustomParam>(`/tags/${tagId}/custom-params`, data)
@@ -63,7 +63,7 @@ export function createCustomParam(
 export function updateCustomParam(
   tagId: string,
   paramId: string,
-  data: { param_key?: string; param_value?: string },
+  data: { field?: string; value?: string },
 ) {
   return client
     .patch<TagCustomParam>(`/tags/${tagId}/custom-params/${paramId}`, data)

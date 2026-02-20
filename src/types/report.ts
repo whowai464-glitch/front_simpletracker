@@ -1,7 +1,7 @@
 export interface EventVolumeByHour {
   hour: string;
   event_name: string;
-  count: number;
+  volume: number;
 }
 
 export interface EventVolumeReport {

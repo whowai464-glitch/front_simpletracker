@@ -40,7 +40,7 @@ export interface Domain {
   txt_name?: string;
   txt_value?: string;
   full_hostname: string;
-  verification_errors?: string[];
+  verification_errors?: string | null;
   last_synced_at?: string;
   business?: Business;
   created_at: string;

@@ -1,4 +1,4 @@
-export type TagType = 'redirect' | 'gtm' | 'whatsapp' | (string & {});
+export type TagType = 'own_page' | 'redirect' | 'link_whats';
 
 export interface Tag {
   id: string;
@@ -20,7 +20,7 @@ export interface Tag {
   gtm_capture_events?: string[];
   redirect_events?: string[];
   business?: { id: string; name: string };
-  domain?: { id: string; domain: string; subdomain?: string; hostname_status: string; certificate_status: string; verification_errors?: string[] | null; full_hostname: string };
+  domain?: { id: string; domain: string; subdomain?: string; hostname_status: string; certificate_status: string; verification_errors?: string | null; full_hostname: string };
   tag_pixels?: Array<{ id: string; pixel: { id: string; name: string; pixel_type: string; pixel_id: string } }>;
   custom_params?: TagCustomParam[];
   created_at: string;
@@ -52,20 +52,20 @@ export interface TagUpdate {
 export interface TagCustomParam {
   id: string;
   tag_id: string;
-  param_key: string;
-  param_value: string;
+  field: string;
+  value: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface TagCustomParamCreate {
-  param_key: string;
-  param_value: string;
+  field: string;
+  value: string;
 }
 
 export interface TagCustomParamUpdate {
-  param_key?: string;
-  param_value?: string;
+  field?: string;
+  value?: string;
 }
 
 export interface TagScript {

@@ -12,6 +12,7 @@ import {
   Loader,
   Modal,
   Paper,
+  PasswordInput,
   Select,
   Stack,
   Table,
@@ -66,7 +67,7 @@ import {
   useDeleteAdvertisement,
 } from '@/hooks/useAdvertisements';
 import { useDomains } from '@/hooks/useDomains';
-import { usePixels } from '@/hooks/usePixels';
+import { usePixels, useCreatePixel } from '@/hooks/usePixels';
 import type { Tag, TagType, Pixel, PixelType, Campaign, Advertisement, TrafficSource } from '@/types';
 
 const PIXEL_TYPE_COLORS: Record<PixelType, string> = {
@@ -364,6 +365,16 @@ const TAG_TYPE_OPTIONS: { value: TagType; label: string }[] = [
   { value: 'link_whats', label: 'Link WhatsApp' },
 ];
 
+const PIXEL_TYPE_OPTIONS: { value: PixelType; label: string }[] = [
+  { value: 'facebook', label: 'Facebook' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'google', label: 'Google' },
+  { value: 'snapchat', label: 'Snapchat' },
+  { value: 'pinterest', label: 'Pinterest' },
+  { value: 'twitter', label: 'Twitter' },
+  { value: 'linkedin', label: 'LinkedIn' },
+];
+
 function TagFormDrawer({
   opened,
   onClose,
@@ -377,13 +388,17 @@ function TagFormDrawer({
 }) {
   const { data: domains } = useDomains(businessId);
   const { data: pixels } = usePixels(businessId);
-  const createMutation = useCreateTag();
-  const updateMutation = useUpdateTag();
+  const createTagMutation = useCreateTag();
+  const updateTagMutation = useUpdateTag();
   const addPixelMutation = useAddTagPixel();
   const removePixelMutation = useRemoveTagPixel();
+  const createPixelMutation = useCreatePixel();
 
-  const [createdTag, setCreatedTag] = useState<Tag | null>(null);
   const isEdit = !!editingTag;
+
+  const [selectedPixelIds, setSelectedPixelIds] = useState<string[]>([]);
+  const [showPixelForm, setShowPixelForm] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const form = useForm({
     initialValues: {
@@ -395,6 +410,21 @@ function TagFormDrawer({
       destination_url: editingTag?.destination_url ?? '',
       whatsapp_number: editingTag?.whatsapp_number ?? '',
       whatsapp_message: editingTag?.whatsapp_message ?? '',
+    },
+  });
+
+  const pixelForm = useForm({
+    initialValues: {
+      name: '',
+      pixel_type: '' as string,
+      pixel_id: '',
+      access_token: '',
+      test_event_code: '',
+    },
+    validate: {
+      name: (v) => (v.trim() ? null : 'Nome obrigatorio'),
+      pixel_type: (v) => (v ? null : 'Tipo obrigatorio'),
+      pixel_id: (v) => (v.trim() ? null : 'ID do pixel obrigatorio'),
     },
   });
 
@@ -410,14 +440,16 @@ function TagFormDrawer({
         whatsapp_number: editingTag.whatsapp_number ?? '',
         whatsapp_message: editingTag.whatsapp_message ?? '',
       });
+      setSelectedPixelIds(editingTag.tag_pixels?.map((tp) => tp.pixel.id) ?? []);
     } else {
       form.reset();
+      setSelectedPixelIds([]);
     }
-    setCreatedTag(null);
+    setShowPixelForm(false);
   };
 
   // Reset form when drawer opens
-  if (opened && !createdTag && form.values.name === '' && editingTag) {
+  if (opened && form.values.name === '' && editingTag) {
     handleOpen();
   }
 
@@ -433,9 +465,29 @@ function TagFormDrawer({
     label: d.full_hostname || d.domain,
   }));
 
-  const handleSubmit = form.onSubmit((values) => {
+  // Build a set of selected pixel types for duplicate prevention
+  const selectedPixelTypes = new Set(
+    (pixels ?? [])
+      .filter((p) => selectedPixelIds.includes(p.id))
+      .map((p) => p.pixel_type),
+  );
+
+  const handlePixelToggle = (pixelId: string, checked: boolean) => {
+    setSelectedPixelIds((prev) =>
+      checked ? [...prev, pixelId] : prev.filter((id) => id !== pixelId),
+    );
+  };
+
+  const handleSubmit = form.onSubmit(async (values) => {
+    if (!businessId) return;
+    setSubmitting(true);
+
     if (isEdit && editingTag) {
-      updateMutation.mutate(
+      const currentPixelIds = new Set(editingTag.tag_pixels?.map((tp) => tp.pixel.id) ?? []);
+      const toAdd = selectedPixelIds.filter((id) => !currentPixelIds.has(id));
+      const toRemove = [...currentPixelIds].filter((id) => !selectedPixelIds.includes(id));
+
+      updateTagMutation.mutate(
         {
           id: editingTag.id,
           data: {
@@ -448,14 +500,28 @@ function TagFormDrawer({
           },
         },
         {
-          onSuccess: () => {
-            form.reset();
-            onClose();
+          onSuccess: async () => {
+            try {
+              await Promise.all([
+                ...toAdd.map((pixelId) =>
+                  addPixelMutation.mutateAsync({ tagId: editingTag.id, pixelId }),
+                ),
+                ...toRemove.map((pixelId) =>
+                  removePixelMutation.mutateAsync({ tagId: editingTag.id, pixelId }),
+                ),
+              ]);
+            } finally {
+              setSubmitting(false);
+              handleClose();
+            }
+          },
+          onError: () => {
+            setSubmitting(false);
           },
         },
       );
     } else {
-      createMutation.mutate(
+      createTagMutation.mutate(
         {
           name: values.name,
           tag_type: values.tag_type as TagType,
@@ -468,42 +534,113 @@ function TagFormDrawer({
           business_id: businessId,
         },
         {
-          onSuccess: (tag) => {
-            setCreatedTag(tag);
+          onSuccess: async (tag) => {
+            try {
+              if (selectedPixelIds.length > 0) {
+                await Promise.all(
+                  selectedPixelIds.map((pixelId) =>
+                    addPixelMutation.mutateAsync({ tagId: tag.id, pixelId }),
+                  ),
+                );
+              }
+            } finally {
+              setSubmitting(false);
+              handleClose();
+            }
+          },
+          onError: () => {
+            setSubmitting(false);
           },
         },
       );
     }
   });
 
+  const handlePixelFormSubmit = pixelForm.onSubmit((values) => {
+    createPixelMutation.mutate(
+      {
+        name: values.name,
+        pixel_type: values.pixel_type as PixelType,
+        pixel_id: values.pixel_id,
+        access_token: values.access_token,
+        test_event_code: values.test_event_code || undefined,
+        business_id: businessId,
+      },
+      {
+        onSuccess: () => {
+          pixelForm.reset();
+          setShowPixelForm(false);
+        },
+      },
+    );
+  });
+
   const handleClose = () => {
     form.reset();
-    setCreatedTag(null);
+    pixelForm.reset();
+    setSelectedPixelIds([]);
+    setShowPixelForm(false);
+    setSubmitting(false);
     onClose();
-  };
-
-  // Pixels already linked to this tag
-  const linkedPixelIds = new Set(createdTag?.tag_pixels?.map((tp) => tp.pixel.id) ?? []);
-  const linkedTypes = new Set(createdTag?.tag_pixels?.map((tp) => tp.pixel.pixel_type) ?? []);
-
-  const handlePixelToggle = (pixelId: string, _pixelType: string, checked: boolean) => {
-    if (!createdTag) return;
-    if (checked) {
-      addPixelMutation.mutate({ tagId: createdTag.id, pixelId });
-    } else {
-      removePixelMutation.mutate({ tagId: createdTag.id, pixelId });
-    }
   };
 
   return (
     <Drawer
       opened={opened}
       onClose={handleClose}
-      title={isEdit ? 'Editar tag' : 'Criar tag'}
+      title={showPixelForm ? 'Novo Pixel' : isEdit ? 'Editar tag' : 'Criar tag'}
       position="right"
       size="md"
     >
-      {!createdTag ? (
+      {showPixelForm ? (
+        <form onSubmit={handlePixelFormSubmit}>
+          <Stack>
+            <TextInput
+              label="Nome"
+              placeholder="Nome do pixel"
+              required
+              {...pixelForm.getInputProps('name')}
+            />
+            <Select
+              label="Tipo"
+              placeholder="Selecione o tipo"
+              data={PIXEL_TYPE_OPTIONS}
+              required
+              {...pixelForm.getInputProps('pixel_type')}
+            />
+            <TextInput
+              label="Pixel ID"
+              placeholder="ID do pixel na plataforma"
+              required
+              {...pixelForm.getInputProps('pixel_id')}
+            />
+            <PasswordInput
+              label="Access Token"
+              placeholder="Token de acesso"
+              {...pixelForm.getInputProps('access_token')}
+            />
+            <TextInput
+              label="Test Event Code"
+              placeholder="Opcional"
+              {...pixelForm.getInputProps('test_event_code')}
+            />
+            <Group>
+              <Button
+                variant="default"
+                onClick={() => {
+                  pixelForm.reset();
+                  setShowPixelForm(false);
+                }}
+              >
+                Voltar
+              </Button>
+              <Button type="submit" loading={createPixelMutation.isPending}>
+                Criar Pixel
+              </Button>
+            </Group>
+          </Stack>
+        </form>
+      ) : (
         <form onSubmit={handleSubmit}>
           <Stack>
             <TextInput
@@ -561,46 +698,49 @@ function TagFormDrawer({
                 />
               </>
             )}
+
+            <Divider label="Pixels" labelPosition="left" />
+            {(pixels ?? []).length > 0 ? (
+              <Stack gap="xs">
+                {(pixels ?? []).map((pixel) => {
+                  const isSelected = selectedPixelIds.includes(pixel.id);
+                  const typeConflict =
+                    !isSelected && selectedPixelTypes.has(pixel.pixel_type);
+                  return (
+                    <Checkbox
+                      key={pixel.id}
+                      label={`${pixel.name} (${pixel.pixel_type})`}
+                      checked={isSelected}
+                      disabled={typeConflict}
+                      onChange={(e) =>
+                        handlePixelToggle(pixel.id, e.currentTarget.checked)
+                      }
+                    />
+                  );
+                })}
+              </Stack>
+            ) : (
+              <Text size="sm" c="dimmed">
+                Nenhum pixel cadastrado
+              </Text>
+            )}
+            <Button
+              variant="light"
+              size="xs"
+              leftSection={<IconPlus size={14} />}
+              onClick={() => setShowPixelForm(true)}
+            >
+              Novo Pixel
+            </Button>
+
             <Button
               type="submit"
-              loading={createMutation.isPending || updateMutation.isPending}
+              loading={submitting}
             >
               {isEdit ? 'Salvar' : 'Criar'}
             </Button>
           </Stack>
         </form>
-      ) : (
-        <Stack>
-          <Text fw={600}>Tag criada: {createdTag.name}</Text>
-          <Divider />
-          <Text size="sm" fw={500}>Vincular pixels</Text>
-          {!(pixels ?? []).length ? (
-            <Text size="sm" c="dimmed">
-              Nenhum pixel disponivel para vincular
-            </Text>
-          ) : (
-            <Stack gap="xs">
-              {(pixels ?? []).map((pixel) => {
-                const isLinked = linkedPixelIds.has(pixel.id);
-                const typeConflict = !isLinked && linkedTypes.has(pixel.pixel_type);
-                return (
-                  <Checkbox
-                    key={pixel.id}
-                    label={`${pixel.name} (${pixel.pixel_type})`}
-                    checked={isLinked}
-                    disabled={typeConflict || addPixelMutation.isPending || removePixelMutation.isPending}
-                    onChange={(e) =>
-                      handlePixelToggle(pixel.id, pixel.pixel_type, e.currentTarget.checked)
-                    }
-                  />
-                );
-              })}
-            </Stack>
-          )}
-          <Button variant="default" onClick={handleClose} mt="md">
-            Fechar
-          </Button>
-        </Stack>
       )}
     </Drawer>
   );

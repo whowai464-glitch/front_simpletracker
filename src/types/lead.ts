@@ -47,10 +47,18 @@ export interface LeadCreate {
 
 export interface LeadEvent {
   id: string;
-  lead_id: string;
   event_name: string;
-  event_data?: Record<string, unknown>;
-  created_at: string;
+  timestamp: string;
+  page_location: string | null;
+  page_title: string | null;
+  value: number;
+  currency: string | null;
+  ip: string | null;
+  city: string | null;
+  country: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
 }
 
 export interface PaginatedLeads {
