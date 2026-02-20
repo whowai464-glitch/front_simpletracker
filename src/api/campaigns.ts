@@ -3,10 +3,10 @@ import type { Campaign, CampaignUpdate } from '@/types';
 
 export function listCampaigns(businessId: string) {
   return client
-    .get<{ data: Campaign[] }>('/campaigns', {
+    .get<Campaign[]>('/campaigns', {
       params: { business_id: businessId },
     })
-    .then((r) => r.data.data);
+    .then((r) => r.data);
 }
 
 export function getCampaign(id: string) {

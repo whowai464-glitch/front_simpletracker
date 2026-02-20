@@ -3,8 +3,8 @@ import type { Business, BusinessCreate, BusinessUpdate } from '@/types';
 
 export function listBusinesses() {
   return client
-    .get<{ data: Business[] }>('/businesses')
-    .then((r) => r.data.data);
+    .get<Business[]>('/businesses')
+    .then((r) => r.data);
 }
 
 export function getBusiness(id: string) {

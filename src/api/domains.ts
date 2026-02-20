@@ -3,10 +3,10 @@ import type { Domain, DomainCreate } from '@/types';
 
 export function listDomains(businessId: string) {
   return client
-    .get<{ data: Domain[] }>('/domains', {
+    .get<Domain[]>('/domains', {
       params: { business_id: businessId },
     })
-    .then((r) => r.data.data);
+    .then((r) => r.data);
 }
 
 export function getDomain(id: string) {

@@ -9,8 +9,8 @@ import type {
 
 export function listWorkspaces() {
   return client
-    .get<{ data: Workspace[] }>('/workspaces')
-    .then((r) => r.data.data);
+    .get<{ workspaces: Array<{ workspace: Workspace; role: string; is_current: boolean }> }>('/workspaces')
+    .then((r) => r.data.workspaces.map((w) => w.workspace));
 }
 
 export function switchWorkspace(id: string) {
@@ -21,8 +21,8 @@ export function switchWorkspace(id: string) {
 
 export function listMembers(workspaceId: string) {
   return client
-    .get<{ data: WorkspaceMember[] }>(`/workspaces/${workspaceId}/members`)
-    .then((r) => r.data.data);
+    .get<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`)
+    .then((r) => r.data);
 }
 
 export function removeMember(workspaceId: string, memberId: string) {
@@ -33,8 +33,8 @@ export function removeMember(workspaceId: string, memberId: string) {
 
 export function listInvitations(workspaceId: string) {
   return client
-    .get<{ data: Invitation[] }>(`/workspaces/${workspaceId}/invitations`)
-    .then((r) => r.data.data);
+    .get<Invitation[]>(`/workspaces/${workspaceId}/invitations`)
+    .then((r) => r.data);
 }
 
 export function createInvitation(

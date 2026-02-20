@@ -3,10 +3,10 @@ import type { Pixel, PixelCreate, PixelUpdate, PixelType } from '@/types';
 
 export function listPixels(businessId: string, pixelType?: PixelType) {
   return client
-    .get<{ data: Pixel[] }>('/pixels', {
+    .get<Pixel[]>('/pixels', {
       params: { business_id: businessId, ...(pixelType ? { pixel_type: pixelType } : {}) },
     })
-    .then((r) => r.data.data);
+    .then((r) => r.data);
 }
 
 export function getPixel(id: string) {
@@ -27,8 +27,8 @@ export function deletePixel(id: string) {
 
 export function searchPixels(businessId: string, query: string) {
   return client
-    .get<{ data: Pixel[] }>('/pixels/search', {
+    .get<Pixel[]>('/pixels/search', {
       params: { business_id: businessId, q: query },
     })
-    .then((r) => r.data.data);
+    .then((r) => r.data);
 }

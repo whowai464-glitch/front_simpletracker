@@ -3,10 +3,10 @@ import type { Advertisement, AdvertisementCreate, AdvertisementUpdate } from '@/
 
 export function listAdvertisements(businessId: string) {
   return client
-    .get<{ data: Advertisement[] }>('/advertisements', {
+    .get<Advertisement[]>('/advertisements', {
       params: { business_id: businessId },
     })
-    .then((r) => r.data.data);
+    .then((r) => r.data);
 }
 
 export function getAdvertisement(id: string) {

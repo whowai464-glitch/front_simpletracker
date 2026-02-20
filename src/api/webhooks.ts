@@ -3,10 +3,10 @@ import type { Webhook, WebhookCreate, WebhookUpdate } from '@/types';
 
 export function listWebhooks(businessId?: string) {
   return client
-    .get<{ data: Webhook[] }>('/webhooks', {
+    .get<Webhook[]>('/webhooks', {
       params: { business_id: businessId },
     })
-    .then((r) => r.data.data);
+    .then((r) => r.data);
 }
 
 export function getWebhook(id: string) {

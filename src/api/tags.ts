@@ -9,10 +9,10 @@ import type {
 
 export function listTags(businessId: string, domainId?: string) {
   return client
-    .get<{ data: Tag[] }>('/tags', {
+    .get<Tag[]>('/tags', {
       params: { business_id: businessId, ...(domainId ? { domain_id: domainId } : {}) },
     })
-    .then((r) => r.data.data);
+    .then((r) => r.data);
 }
 
 export function getTag(id: string) {
@@ -47,8 +47,8 @@ export function removeTagPixel(tagId: string, pixelId: string) {
 // Custom Params
 export function listCustomParams(tagId: string) {
   return client
-    .get<{ data: TagCustomParam[] }>(`/tags/${tagId}/custom-params`)
-    .then((r) => r.data.data);
+    .get<TagCustomParam[]>(`/tags/${tagId}/custom-params`)
+    .then((r) => r.data);
 }
 
 export function createCustomParam(
