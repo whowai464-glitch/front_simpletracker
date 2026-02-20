@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import {
   ActionIcon,
-  Badge,
   Button,
   Drawer,
   Group,
   Modal,
   Paper,
+  Select,
   Skeleton,
   Stack,
   Switch,
@@ -38,6 +38,18 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('pt-BR');
 }
 
+const EVENT_TYPE_OPTIONS = [
+  { value: 'lead_created', label: 'Lead criado' },
+  { value: 'lead_updated', label: 'Lead atualizado' },
+  { value: 'event_received', label: 'Evento recebido' },
+];
+
+const EVENT_TYPE_LABELS: Record<string, string> = {
+  lead_created: 'Lead criado',
+  lead_updated: 'Lead atualizado',
+  event_received: 'Evento recebido',
+};
+
 export default function WebhooksPage() {
   const businessId = useSelectedBusinessId();
   const { data: webhooks, isLoading } = useWebhooks(businessId);
@@ -53,7 +65,7 @@ export default function WebhooksPage() {
   const form = useForm({
     initialValues: { event_type: '', url: '', is_active: true },
     validate: {
-      event_type: (v) => (v.trim().length > 0 ? null : 'Tipo de evento obrigatorio'),
+      event_type: (v) => (v ? null : 'Tipo de evento obrigatorio'),
       url: (v) => {
         if (!v.trim()) return 'URL obrigatoria';
         try {
@@ -184,7 +196,7 @@ export default function WebhooksPage() {
                   <Table.Tr key={webhook.id}>
                     <Table.Td>
                       <Text size="sm" fw={500}>
-                        {webhook.event_type}
+                        {EVENT_TYPE_LABELS[webhook.event_type] ?? webhook.event_type}
                       </Text>
                     </Table.Td>
                     <Table.Td>
@@ -193,13 +205,17 @@ export default function WebhooksPage() {
                       </Text>
                     </Table.Td>
                     <Table.Td>
-                      <Badge
-                        color={webhook.is_active ? 'green' : 'red'}
-                        variant="light"
+                      <Switch
                         size="sm"
-                      >
-                        {webhook.is_active ? 'Ativo' : 'Inativo'}
-                      </Badge>
+                        checked={webhook.is_active}
+                        onChange={(e) =>
+                          updateMutation.mutate({
+                            id: webhook.id,
+                            data: { is_active: e.currentTarget.checked },
+                          })
+                        }
+                        disabled={updateMutation.isPending}
+                      />
                     </Table.Td>
                     <Table.Td>
                       <Text size="sm">{formatDate(webhook.created_at)}</Text>
@@ -245,10 +261,12 @@ export default function WebhooksPage() {
       >
         <form onSubmit={handleSubmit}>
           <Stack>
-            <TextInput
+            <Select
               label="Tipo de Evento"
-              placeholder="ex: lead.created"
+              placeholder="Selecione o tipo"
+              data={EVENT_TYPE_OPTIONS}
               required
+              disabled={!!editingWebhook}
               {...form.getInputProps('event_type')}
             />
             <TextInput
