@@ -12,6 +12,7 @@ export interface WorkspaceMember {
   name: string;
   email: string;
   role: WorkspaceRole;
+  joined_at: string;
 }
 
 export interface Invitation {
@@ -29,6 +30,6 @@ export interface Invitation {
 export interface SwitchWorkspaceResponse {
   access_token: string;
   refresh_token: string;
-  workspace_id: string;
-  workspace_name: string;
+  token_type: string;
+  workspace: Workspace;
 }

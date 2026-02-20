@@ -39,7 +39,7 @@ export function useSwitchWorkspace() {
       queryClient.invalidateQueries();
       notifications.show({
         title: 'Workspace alterado',
-        message: `Agora voce esta no workspace "${data.workspace_name}"`,
+        message: `Agora voce esta no workspace "${data.workspace.name}"`,
         color: 'green',
       });
     },
@@ -55,8 +55,8 @@ export function useSwitchWorkspace() {
 
 export function useMembers(workspaceId: string | null) {
   return useQuery({
-    queryKey: ['workspaces', workspaceId, 'members'],
-    queryFn: () => listMembers(workspaceId!),
+    queryKey: ['workspaces', 'members'],
+    queryFn: () => listMembers(),
     enabled: !!workspaceId,
   });
 }
@@ -65,13 +65,7 @@ export function useRemoveMember() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      workspaceId,
-      memberId,
-    }: {
-      workspaceId: string;
-      memberId: string;
-    }) => removeMember(workspaceId, memberId),
+    mutationFn: ({ userId }: { userId: string }) => removeMember(userId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       notifications.show({
@@ -92,8 +86,8 @@ export function useRemoveMember() {
 
 export function useInvitations(workspaceId: string | null) {
   return useQuery({
-    queryKey: ['workspaces', workspaceId, 'invitations'],
-    queryFn: () => listInvitations(workspaceId!),
+    queryKey: ['workspaces', 'invitations'],
+    queryFn: () => listInvitations(),
     enabled: !!workspaceId,
   });
 }
@@ -103,14 +97,12 @@ export function useCreateInvitation() {
 
   return useMutation({
     mutationFn: ({
-      workspaceId,
       email,
       role,
     }: {
-      workspaceId: string;
       email: string;
       role: WorkspaceRole;
-    }) => createInvitation(workspaceId, { email, role }),
+    }) => createInvitation({ email, role }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       notifications.show({
@@ -146,7 +138,7 @@ export function useAcceptInvitation() {
       setTokens(data.access_token, data.refresh_token);
       notifications.show({
         title: 'Convite aceito',
-        message: `Voce entrou no workspace "${data.workspace_name}"`,
+        message: `Voce entrou no workspace "${data.workspace.name}"`,
         color: 'green',
       });
     },
@@ -164,13 +156,8 @@ export function useDeleteInvitation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({
-      workspaceId,
-      invitationId,
-    }: {
-      workspaceId: string;
-      invitationId: string;
-    }) => deleteInvitation(workspaceId, invitationId),
+    mutationFn: ({ invitationId }: { invitationId: string }) =>
+      deleteInvitation(invitationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       notifications.show({
@@ -193,8 +180,8 @@ export function useUpdateWorkspace() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { name?: string } }) =>
-      updateWorkspace(id, data),
+    mutationFn: ({ data }: { data: { name?: string } }) =>
+      updateWorkspace(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['workspaces'] });
       notifications.show({

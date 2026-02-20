@@ -23,7 +23,7 @@ export function createCampaign(data: {
 }
 
 export function updateCampaign(id: string, data: CampaignUpdate) {
-  return client.put<Campaign>(`/campaigns/${id}`, data).then((r) => r.data);
+  return client.patch<Campaign>(`/campaigns/${id}`, data).then((r) => r.data);
 }
 
 export function deleteCampaign(id: string) {

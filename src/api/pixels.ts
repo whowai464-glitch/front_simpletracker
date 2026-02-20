@@ -18,7 +18,7 @@ export function createPixel(data: PixelCreate & { business_id: string }) {
 }
 
 export function updatePixel(id: string, data: PixelUpdate) {
-  return client.put<Pixel>(`/pixels/${id}`, data).then((r) => r.data);
+  return client.patch<Pixel>(`/pixels/${id}`, data).then((r) => r.data);
 }
 
 export function deletePixel(id: string) {

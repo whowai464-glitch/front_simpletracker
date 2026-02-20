@@ -16,7 +16,7 @@ export function createBusiness(data: BusinessCreate) {
 }
 
 export function updateBusiness(id: string, data: BusinessUpdate) {
-  return client.put<Business>(`/businesses/${id}`, data).then((r) => r.data);
+  return client.patch<Business>(`/businesses/${id}`, data).then((r) => r.data);
 }
 
 export function deleteBusiness(id: string) {

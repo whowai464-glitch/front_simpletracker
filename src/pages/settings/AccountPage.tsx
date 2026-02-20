@@ -76,9 +76,9 @@ export default function AccountPage() {
   };
 
   const confirmRemove = () => {
-    if (workspaceId && memberToRemove) {
+    if (memberToRemove) {
       removeMutation.mutate(
-        { workspaceId, memberId: memberToRemove },
+        { userId: memberToRemove },
         {
           onSuccess: () => {
             closeRemoveModal();
@@ -90,9 +90,8 @@ export default function AccountPage() {
   };
 
   const handleInvite = inviteForm.onSubmit((values) => {
-    if (!workspaceId) return;
     createInvitationMutation.mutate(
-      { workspaceId, email: values.email, role: values.role },
+      { email: values.email, role: values.role },
       {
         onSuccess: () => {
           inviteForm.reset();
@@ -103,8 +102,7 @@ export default function AccountPage() {
   });
 
   const handleRevokeInvitation = (invitationId: string) => {
-    if (!workspaceId) return;
-    deleteInvitationMutation.mutate({ workspaceId, invitationId });
+    deleteInvitationMutation.mutate({ invitationId });
   };
 
   if (wsLoading) {

@@ -23,7 +23,7 @@ export function createAdvertisement(data: AdvertisementCreate) {
 
 export function updateAdvertisement(id: string, data: AdvertisementUpdate) {
   return client
-    .put<Advertisement>(`/advertisements/${id}`, data)
+    .patch<Advertisement>(`/advertisements/${id}`, data)
     .then((r) => r.data);
 }
 

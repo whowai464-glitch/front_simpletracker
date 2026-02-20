@@ -24,7 +24,7 @@ export function createTag(data: TagCreate) {
 }
 
 export function updateTag(id: string, data: TagUpdate) {
-  return client.put<Tag>(`/tags/${id}`, data).then((r) => r.data);
+  return client.patch<Tag>(`/tags/${id}`, data).then((r) => r.data);
 }
 
 export function deleteTag(id: string) {
@@ -66,7 +66,7 @@ export function updateCustomParam(
   data: { param_key?: string; param_value?: string },
 ) {
   return client
-    .put<TagCustomParam>(`/tags/${tagId}/custom-params/${paramId}`, data)
+    .patch<TagCustomParam>(`/tags/${tagId}/custom-params/${paramId}`, data)
     .then((r) => r.data);
 }
 

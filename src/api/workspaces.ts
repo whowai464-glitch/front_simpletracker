@@ -13,59 +13,56 @@ export function listWorkspaces() {
     .then((r) => r.data.workspaces.map((w) => w.workspace));
 }
 
-export function switchWorkspace(id: string) {
+export function switchWorkspace(workspaceId: string) {
   return client
-    .post<SwitchWorkspaceResponse>(`/workspaces/${id}/switch`)
+    .post<SwitchWorkspaceResponse>('/workspaces/switch', { workspace_id: workspaceId })
     .then((r) => r.data);
 }
 
-export function listMembers(workspaceId: string) {
+export function listMembers() {
   return client
-    .get<WorkspaceMember[]>(`/workspaces/${workspaceId}/members`)
+    .get<{ members: WorkspaceMember[] }>('/workspaces/members')
+    .then((r) => r.data.members);
+}
+
+export function removeMember(userId: string) {
+  return client
+    .delete(`/workspaces/members/${userId}`)
     .then((r) => r.data);
 }
 
-export function removeMember(workspaceId: string, memberId: string) {
+export function listInvitations() {
   return client
-    .delete(`/workspaces/${workspaceId}/members/${memberId}`)
-    .then((r) => r.data);
+    .get<{ invitations: Invitation[] }>('/workspaces/invitations')
+    .then((r) => r.data.invitations);
 }
 
-export function listInvitations(workspaceId: string) {
+export function createInvitation(data: { email: string; role: WorkspaceRole }) {
   return client
-    .get<Invitation[]>(`/workspaces/${workspaceId}/invitations`)
-    .then((r) => r.data);
-}
-
-export function createInvitation(
-  workspaceId: string,
-  data: { email: string; role: WorkspaceRole },
-) {
-  return client
-    .post<Invitation>(`/workspaces/${workspaceId}/invitations`, data)
+    .post<Invitation>('/workspaces/invitations', data)
     .then((r) => r.data);
 }
 
 export function getInvitationInfo(token: string) {
   return client
-    .get<Invitation>(`/workspaces/invitations/${token}/info`)
+    .get<Invitation>(`/workspaces/invitations/${token}`)
     .then((r) => r.data);
 }
 
 export function acceptInvitation(token: string) {
   return client
-    .post<SwitchWorkspaceResponse>(`/workspaces/invitations/${token}/accept`)
+    .post<SwitchWorkspaceResponse>('/workspaces/invitations/accept', { token })
     .then((r) => r.data);
 }
 
-export function deleteInvitation(workspaceId: string, invitationId: string) {
+export function deleteInvitation(invitationId: string) {
   return client
-    .delete(`/workspaces/${workspaceId}/invitations/${invitationId}`)
+    .post('/workspaces/invitations/revoke', { invitation_id: invitationId })
     .then((r) => r.data);
 }
 
-export function updateWorkspace(id: string, data: { name?: string }) {
+export function updateWorkspace(data: { name?: string }) {
   return client
-    .put<Workspace>(`/workspaces/${id}`, data)
+    .patch<Workspace>('/workspaces', data)
     .then((r) => r.data);
 }
