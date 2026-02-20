@@ -42,10 +42,7 @@ export default function DashboardPage() {
   const [fromDate, setFromDate] = useState<string | null>(defaultFrom);
   const [toDate, setToDate] = useState<string | null>(defaultTo);
 
-  const fromParam = fromDate || undefined;
-  const toParam = toDate || undefined;
-
-  const { data, isLoading } = useEventVolumeByHour(fromParam, toParam);
+  const { data, isLoading } = useEventVolumeByHour(fromDate || undefined, toDate || undefined);
 
   // Transform rows into chart-friendly format: group by hour, with event names as keys
   const { chartData, eventNames } = useMemo(() => {
