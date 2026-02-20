@@ -14,7 +14,8 @@ export function getPixel(id: string) {
 }
 
 export function createPixel(data: PixelCreate & { business_id: string }) {
-  return client.post<Pixel>('/pixels', data).then((r) => r.data);
+  const { business_id, ...body } = data;
+  return client.post<Pixel>('/pixels', body, { params: { business_id } }).then((r) => r.data);
 }
 
 export function updatePixel(id: string, data: PixelUpdate) {
