@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import {
+  ActionIcon,
+  Badge,
   Button,
   Card,
+  Collapse,
   Grid,
   Group,
   Loader,
@@ -11,7 +15,19 @@ import {
   Timeline,
   Title,
 } from '@mantine/core';
-import { IconArrowLeft, IconUser } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconUser,
+  IconChevronDown,
+  IconChevronUp,
+  IconBrandFacebook,
+  IconBrandGoogle,
+  IconBrandTiktok,
+  IconBrandInstagram,
+  IconBrandX,
+  IconBrandLinkedin,
+  IconAd,
+} from '@tabler/icons-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import PageHeader from '@/components/common/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
@@ -34,11 +50,33 @@ function InfoItem({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
+function detectPlatformIcon(utmSource: string | null, utmCampaign: string | null) {
+  const text = `${utmSource ?? ''} ${utmCampaign ?? ''}`.toLowerCase();
+  if (/facebook|meta|\bfb\b/.test(text)) return <IconBrandFacebook size={16} color="#228be6" />;
+  if (/google/.test(text)) return <IconBrandGoogle size={16} color="#fa5252" />;
+  if (/tiktok/.test(text)) return <IconBrandTiktok size={16} color="#343a40" />;
+  if (/instagram|\big\b/.test(text)) return <IconBrandInstagram size={16} color="#e64980" />;
+  if (/twitter|x\.com/.test(text)) return <IconBrandX size={16} color="#343a40" />;
+  if (/linkedin/.test(text)) return <IconBrandLinkedin size={16} color="#4c6ef5" />;
+  if (/kwai/.test(text)) return <IconAd size={16} color="#fd7e14" />;
+  return null;
+}
+
 export default function LeadDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: lead, isLoading } = useLead(id);
   const { data: eventsData, isLoading: eventsLoading } = useLeadEvents(id);
+  const [expandedEvents, setExpandedEvents] = useState<Set<string>>(new Set());
+
+  const toggleEvent = (eventId: string) => {
+    setExpandedEvents((prev) => {
+      const next = new Set(prev);
+      if (next.has(eventId)) next.delete(eventId);
+      else next.add(eventId);
+      return next;
+    });
+  };
 
   if (isLoading) {
     return (
@@ -158,18 +196,64 @@ export default function LeadDetailPage() {
             </Text>
           ) : (
             <Timeline active={eventsData.events.length - 1} bulletSize={20} lineWidth={2}>
-              {eventsData.events.map((event) => (
-                <Timeline.Item key={event.id} title={event.event_name}>
-                  <Text size="xs" c="dimmed" mt={4}>
-                    {formatDate(event.timestamp)}
-                  </Text>
-                  {event.page_location && (
-                    <Text size="xs" c="dimmed" mt={2}>
-                      {event.page_location}
+              {eventsData.events.map((event) => {
+                const platformIcon = detectPlatformIcon(event.utm_source, event.utm_campaign);
+                const isExpanded = expandedEvents.has(event.id);
+                const utmBadges = [
+                  event.utm_source && { label: event.utm_source, color: 'blue' },
+                  event.utm_medium && { label: event.utm_medium, color: 'cyan' },
+                  event.utm_campaign && { label: event.utm_campaign, color: 'violet' },
+                ].filter(Boolean) as { label: string; color: string }[];
+
+                return (
+                  <Timeline.Item
+                    key={event.id}
+                    title={
+                      <Group gap="xs" align="center">
+                        {platformIcon}
+                        <Text size="sm" fw={500}>{event.event_name}</Text>
+                        <ActionIcon
+                          variant="subtle"
+                          size="xs"
+                          onClick={() => toggleEvent(event.id)}
+                        >
+                          {isExpanded ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
+                        </ActionIcon>
+                      </Group>
+                    }
+                  >
+                    <Text size="xs" c="dimmed" mt={4}>
+                      {formatDate(event.timestamp)}
                     </Text>
-                  )}
-                </Timeline.Item>
-              ))}
+                    {event.page_location && (
+                      <Text size="xs" c="dimmed" mt={2}>
+                        {event.page_location}
+                      </Text>
+                    )}
+                    {utmBadges.length > 0 && (
+                      <Group gap={4} mt={4}>
+                        {utmBadges.map((b) => (
+                          <Badge key={b.label} variant="light" size="xs" color={b.color}>
+                            {b.label}
+                          </Badge>
+                        ))}
+                      </Group>
+                    )}
+                    <Collapse in={isExpanded}>
+                      <SimpleGrid cols={2} spacing="xs" mt="sm" p="xs" style={{ background: 'var(--mantine-color-gray-0)', borderRadius: 4 }}>
+                        <InfoItem label="Titulo da pagina" value={event.page_title} />
+                        <InfoItem label="Valor" value={event.value ? `${event.value}${event.currency ? ` ${event.currency}` : ''}` : null} />
+                        <InfoItem label="IP" value={event.ip} />
+                        <InfoItem label="Cidade" value={event.city} />
+                        <InfoItem label="Pais" value={event.country} />
+                        <InfoItem label="UTM Source" value={event.utm_source} />
+                        <InfoItem label="UTM Medium" value={event.utm_medium} />
+                        <InfoItem label="UTM Campaign" value={event.utm_campaign} />
+                      </SimpleGrid>
+                    </Collapse>
+                  </Timeline.Item>
+                );
+              })}
             </Timeline>
           )}
         </Card>
