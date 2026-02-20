@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <PageHeader title="Dashboard" />
+      <PageHeader title="Painel" />
 
       <Stack gap="md">
         <Group gap="md">

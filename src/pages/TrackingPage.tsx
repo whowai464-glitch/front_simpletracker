@@ -122,7 +122,7 @@ export default function TrackingPage() {
 
   return (
     <>
-      <PageHeader title="Tracking" />
+      <PageHeader title="Rastreamento" />
       <Paper withBorder p="md" radius="md">
         <Tabs
           value={activeTab}
