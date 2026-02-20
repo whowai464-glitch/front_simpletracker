@@ -5,9 +5,9 @@ import {
   Button,
   Drawer,
   Group,
-  Loader,
   Modal,
   Paper,
+  Skeleton,
   Stack,
   Switch,
   Table,
@@ -147,9 +147,21 @@ export default function WebhooksPage() {
 
       <Paper withBorder radius="md">
         {isLoading ? (
-          <Group justify="center" p="xl">
-            <Loader />
-          </Group>
+          <Table.ScrollContainer minWidth={600}>
+            <Table>
+              <Table.Tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Table.Tr key={i}>
+                    <Table.Td><Skeleton height={16} /></Table.Td>
+                    <Table.Td><Skeleton height={16} /></Table.Td>
+                    <Table.Td><Skeleton height={16} width={50} /></Table.Td>
+                    <Table.Td><Skeleton height={16} /></Table.Td>
+                    <Table.Td><Skeleton height={16} width={50} /></Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
         ) : !webhooks?.length ? (
           <EmptyState
             message="Nenhum webhook encontrado"

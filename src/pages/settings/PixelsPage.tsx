@@ -5,11 +5,11 @@ import {
   Button,
   Drawer,
   Group,
-  Loader,
   Modal,
   Paper,
   PasswordInput,
   Select,
+  Skeleton,
   Stack,
   Table,
   Text,
@@ -191,9 +191,22 @@ export default function PixelsPage() {
 
       <Paper withBorder radius="md">
         {isLoading ? (
-          <Group justify="center" p="xl">
-            <Loader />
-          </Group>
+          <Table.ScrollContainer minWidth={600}>
+            <Table>
+              <Table.Tbody>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Table.Tr key={i}>
+                    <Table.Td><Skeleton height={16} /></Table.Td>
+                    <Table.Td><Skeleton height={16} width={60} /></Table.Td>
+                    <Table.Td><Skeleton height={16} /></Table.Td>
+                    <Table.Td><Skeleton height={16} width={50} /></Table.Td>
+                    <Table.Td><Skeleton height={16} /></Table.Td>
+                    <Table.Td><Skeleton height={16} width={50} /></Table.Td>
+                  </Table.Tr>
+                ))}
+              </Table.Tbody>
+            </Table>
+          </Table.ScrollContainer>
         ) : !pixels?.length ? (
           <EmptyState
             message="Nenhum pixel encontrado"

@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react';
 import {
   Card,
   Group,
-  Loader,
   Paper,
   SimpleGrid,
+  Skeleton,
   Stack,
   Text,
   Title,
@@ -107,7 +107,7 @@ export default function DashboardPage() {
               Total de Eventos
             </Text>
             <Title order={2} mt="xs">
-              {isLoading ? <Loader size="sm" /> : totalEvents.toLocaleString('pt-BR')}
+              {isLoading ? <Skeleton height={28} width={80} /> : totalEvents.toLocaleString('pt-BR')}
             </Title>
           </Card>
           <Card withBorder radius="md" p="lg">
@@ -115,7 +115,7 @@ export default function DashboardPage() {
               Tipos de Evento
             </Text>
             <Title order={2} mt="xs">
-              {isLoading ? <Loader size="sm" /> : uniqueEventTypes}
+              {isLoading ? <Skeleton height={28} width={40} /> : uniqueEventTypes}
             </Title>
           </Card>
         </SimpleGrid>
@@ -125,9 +125,9 @@ export default function DashboardPage() {
             Volume de Eventos por Hora
           </Title>
           {isLoading ? (
-            <Group justify="center" p="xl">
-              <Loader />
-            </Group>
+            <Stack gap="sm" p="md">
+              <Skeleton height={400} radius="sm" />
+            </Stack>
           ) : !chartData.length ? (
             <EmptyState
               message="Nenhum dado disponivel para o periodo selecionado"

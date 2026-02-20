@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import {
   Group,
-  Loader,
   Modal,
   Pagination,
   Paper,
+  Skeleton,
   Stack,
   Table,
   Text,
@@ -81,9 +81,24 @@ export default function LeadsPage() {
 
         <Paper withBorder radius="md">
           {isLoading ? (
-            <Group justify="center" p="xl">
-              <Loader />
-            </Group>
+            <Table.ScrollContainer minWidth={700}>
+              <Table>
+                <Table.Tbody>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Table.Tr key={i}>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} width={30} /></Table.Td>
+                    </Table.Tr>
+                  ))}
+                </Table.Tbody>
+              </Table>
+            </Table.ScrollContainer>
           ) : !filteredLeads.length ? (
             <EmptyState
               message="Nenhum lead encontrado"

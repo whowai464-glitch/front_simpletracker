@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import AuthGuard from '@/components/common/AuthGuard';
 import PublicRoute from '@/components/common/PublicRoute';
+import ErrorBoundary from '@/components/common/ErrorBoundary';
 import AppShellLayout from '@/components/layout/AppShellLayout';
 import LoginPage from '@/pages/auth/LoginPage';
 import RegisterPage from '@/pages/auth/RegisterPage';
@@ -17,6 +18,7 @@ import ProfilePage from '@/pages/ProfilePage';
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <Routes>
       {/* Public routes — redirect to dashboard if already authenticated */}
       <Route element={<PublicRoute />}>
@@ -44,5 +46,6 @@ export default function App() {
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>
+    </ErrorBoundary>
   );
 }
