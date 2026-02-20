@@ -46,3 +46,8 @@ export interface TagCustomParamUpdate {
   field?: string;
   value?: string;
 }
+
+export interface TagScript {
+  script_url: string;
+  script_tag: string;
+}
