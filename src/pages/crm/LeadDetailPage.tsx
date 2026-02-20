@@ -1,7 +1,6 @@
 import {
   Button,
   Card,
-  Code,
   Grid,
   Group,
   Loader,
@@ -158,12 +157,12 @@ export default function LeadDetailPage() {
               {eventsData.events.map((event) => (
                 <Timeline.Item key={event.id} title={event.event_name}>
                   <Text size="xs" c="dimmed" mt={4}>
-                    {formatDate(event.created_at)}
+                    {formatDate(event.timestamp)}
                   </Text>
-                  {event.event_data && Object.keys(event.event_data).length > 0 && (
-                    <Code block mt="xs">
-                      {JSON.stringify(event.event_data, null, 2)}
-                    </Code>
+                  {event.page_location && (
+                    <Text size="xs" c="dimmed" mt={2}>
+                      {event.page_location}
+                    </Text>
                   )}
                 </Timeline.Item>
               ))}

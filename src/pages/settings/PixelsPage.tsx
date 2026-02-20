@@ -106,7 +106,7 @@ export default function PixelsPage() {
       name: pixel.name,
       pixel_type: pixel.pixel_type,
       pixel_id: pixel.pixel_id,
-      access_token: pixel.access_token,
+      access_token: '',
       test_event_code: pixel.test_event_code ?? '',
     });
     openDrawer();

@@ -59,7 +59,7 @@ export default function DashboardPage() {
         hourMap.set(row.hour, { hour: row.hour } as unknown as Record<string, number>);
       }
       const entry = hourMap.get(row.hour)!;
-      entry[row.event_name] = row.count;
+      entry[row.event_name] = row.volume;
     }
 
     const sorted = [...hourMap.values()].sort((a, b) =>
@@ -71,7 +71,7 @@ export default function DashboardPage() {
 
   const totalEvents = useMemo(() => {
     if (!data?.rows.length) return 0;
-    return data.rows.reduce((sum, r) => sum + r.count, 0);
+    return data.rows.reduce((sum, r) => sum + r.volume, 0);
   }, [data]);
 
   const uniqueEventTypes = useMemo(() => {

@@ -592,10 +592,10 @@ function TagDetailDrawer({
   const [editingParamId, setEditingParamId] = useState<string | null>(null);
 
   const paramForm = useForm({
-    initialValues: { param_key: '', param_value: '' },
+    initialValues: { field: '', value: '' },
     validate: {
-      param_key: (v) => (v.trim() ? null : 'Campo obrigatorio'),
-      param_value: (v) => (v.trim() ? null : 'Valor obrigatorio'),
+      field: (v) => (v.trim() ? null : 'Campo obrigatorio'),
+      value: (v) => (v.trim() ? null : 'Valor obrigatorio'),
     },
   });
 
@@ -636,7 +636,7 @@ function TagDetailDrawer({
   const handleCreateParam = paramForm.onSubmit((values) => {
     if (!tagId) return;
     createParamMutation.mutate(
-      { tagId, data: values },
+      { tagId, data: { field: values.field, value: values.value } },
       {
         onSuccess: () => {
           paramForm.reset();
@@ -653,8 +653,8 @@ function TagDetailDrawer({
         tagId,
         paramId,
         data: {
-          param_key: paramForm.values.param_key,
-          param_value: paramForm.values.param_value,
+          field: paramForm.values.field,
+          value: paramForm.values.value,
         },
       },
       {
@@ -666,10 +666,10 @@ function TagDetailDrawer({
     );
   };
 
-  const handleStartEditParam = (param: { id: string; param_key: string; param_value: string }) => {
+  const handleStartEditParam = (param: { id: string; field: string; value: string }) => {
     setEditingParamId(param.id);
     setAddingParam(false);
-    paramForm.setValues({ param_key: param.param_key, param_value: param.param_value });
+    paramForm.setValues({ field: param.field, value: param.value });
   };
 
   return (
@@ -785,13 +785,13 @@ function TagDetailDrawer({
                       <Table.Td>
                         <TextInput
                           size="xs"
-                          {...paramForm.getInputProps('param_key')}
+                          {...paramForm.getInputProps('field')}
                         />
                       </Table.Td>
                       <Table.Td>
                         <TextInput
                           size="xs"
-                          {...paramForm.getInputProps('param_value')}
+                          {...paramForm.getInputProps('value')}
                         />
                       </Table.Td>
                       <Table.Td>
@@ -820,8 +820,8 @@ function TagDetailDrawer({
                     </Table.Tr>
                   ) : (
                     <Table.Tr key={param.id}>
-                      <Table.Td><Text size="sm">{param.param_key}</Text></Table.Td>
-                      <Table.Td><Text size="sm">{param.param_value}</Text></Table.Td>
+                      <Table.Td><Text size="sm">{param.field}</Text></Table.Td>
+                      <Table.Td><Text size="sm">{param.value}</Text></Table.Td>
                       <Table.Td>
                         <Group gap={4}>
                           <ActionIcon
@@ -862,16 +862,16 @@ function TagDetailDrawer({
                 <TextInput
                   size="xs"
                   label="Campo"
-                  placeholder="param_key"
+                  placeholder="field"
                   style={{ flex: 1 }}
-                  {...paramForm.getInputProps('param_key')}
+                  {...paramForm.getInputProps('field')}
                 />
                 <TextInput
                   size="xs"
                   label="Valor"
-                  placeholder="param_value"
+                  placeholder="value"
                   style={{ flex: 1 }}
-                  {...paramForm.getInputProps('param_value')}
+                  {...paramForm.getInputProps('value')}
                 />
                 <Button
                   size="xs"

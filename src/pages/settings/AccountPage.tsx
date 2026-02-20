@@ -225,7 +225,7 @@ export default function AccountPage() {
                     <Table.Tr key={invitation.id}>
                       <Table.Td>
                         <Text size="sm" fw={500}>
-                          {invitation.email}
+                          {invitation.invited_email}
                         </Text>
                       </Table.Td>
                       <Table.Td>
@@ -239,11 +239,11 @@ export default function AccountPage() {
                       </Table.Td>
                       <Table.Td>
                         <Badge
-                          color={invitation.is_valid ? 'green' : 'red'}
+                          color={!invitation.is_revoked && new Date(invitation.expires_at) > new Date() ? 'green' : 'red'}
                           variant="light"
                           size="sm"
                         >
-                          {invitation.is_valid ? 'Valido' : 'Expirado'}
+                          {invitation.is_revoked ? 'Revogado' : new Date(invitation.expires_at) > new Date() ? 'Valido' : 'Expirado'}
                         </Badge>
                       </Table.Td>
                       <Table.Td>
