@@ -93,6 +93,10 @@ export default function LeadDetailPage() {
             <InfoItem label="Email" value={lead.email} />
             <InfoItem label="Telefone" value={lead.phone} />
             <InfoItem label="Documento" value={lead.document} />
+            <InfoItem label="Doc. Empresa" value={lead.business_document} />
+            <InfoItem label="Pais" value={lead.country} />
+            <InfoItem label="Cidade" value={lead.city} />
+            <InfoItem label="Estado" value={lead.state} />
             <InfoItem label="Aniversario" value={lead.birthday} />
             <InfoItem label="Genero" value={lead.gender} />
             <InfoItem label="ID Externo" value={lead.external_id} />

@@ -81,11 +81,16 @@ export default function LeadsPage() {
 
         <Paper withBorder radius="md">
           {isLoading ? (
-            <Table.ScrollContainer minWidth={700}>
+            <Table.ScrollContainer minWidth={1100}>
               <Table>
                 <Table.Tbody>
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Table.Tr key={i}>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
+                      <Table.Td><Skeleton height={16} /></Table.Td>
                       <Table.Td><Skeleton height={16} /></Table.Td>
                       <Table.Td><Skeleton height={16} /></Table.Td>
                       <Table.Td><Skeleton height={16} /></Table.Td>
@@ -105,13 +110,18 @@ export default function LeadsPage() {
               icon={<IconUsers size={48} color="gray" />}
             />
           ) : (
-            <Table.ScrollContainer minWidth={700}>
+            <Table.ScrollContainer minWidth={1100}>
               <Table striped highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>Nome</Table.Th>
                     <Table.Th>Email</Table.Th>
                     <Table.Th>Telefone</Table.Th>
+                    <Table.Th>Documento</Table.Th>
+                    <Table.Th>Doc. Empresa</Table.Th>
+                    <Table.Th>Pais</Table.Th>
+                    <Table.Th>Cidade</Table.Th>
+                    <Table.Th>Estado</Table.Th>
                     <Table.Th>UTM Source</Table.Th>
                     <Table.Th>Campanha</Table.Th>
                     <Table.Th>Tag</Table.Th>
@@ -136,6 +146,21 @@ export default function LeadsPage() {
                       </Table.Td>
                       <Table.Td>
                         <Text size="sm">{lead.phone || '-'}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm">{lead.document || '-'}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm">{lead.business_document || '-'}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm">{lead.country || '-'}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm">{lead.city || '-'}</Text>
+                      </Table.Td>
+                      <Table.Td>
+                        <Text size="sm">{lead.state || '-'}</Text>
                       </Table.Td>
                       <Table.Td>
                         <Text size="sm">{lead.utm_source || '-'}</Text>
