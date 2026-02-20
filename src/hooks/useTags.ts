@@ -15,12 +15,8 @@ import {
   getTagScript,
 } from '@/api/tags';
 import type { TagUpdate } from '@/types';
-import type { AxiosError } from 'axios';
+import { getErrorMessage } from '@/lib/errors';
 
-function getErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<{ detail?: string }>;
-  return axiosError.response?.data?.detail || 'Ocorreu um erro inesperado';
-}
 
 export function useTags(businessId: string | null, domainId?: string) {
   return useQuery({
@@ -251,10 +247,10 @@ export function useDeleteCustomParam() {
 }
 
 // Script
-export function useTagScript(tagId: string | null) {
+export function useTagScript(slug: string | null) {
   return useQuery({
-    queryKey: ['tags', tagId, 'script'],
-    queryFn: () => getTagScript(tagId!),
-    enabled: !!tagId,
+    queryKey: ['tags', 'script', slug],
+    queryFn: () => getTagScript(slug!),
+    enabled: !!slug,
   });
 }

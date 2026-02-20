@@ -141,10 +141,10 @@ export default function LeadsPage() {
                         <Text size="sm">{lead.utm_source || '-'}</Text>
                       </Table.Td>
                       <Table.Td>
-                        <Text size="sm">{lead.campaign || '-'}</Text>
+                        <Text size="sm">{lead.campaign?.name || '-'}</Text>
                       </Table.Td>
                       <Table.Td>
-                        <Text size="sm">{lead.tag || '-'}</Text>
+                        <Text size="sm">{lead.tag?.name || '-'}</Text>
                       </Table.Td>
                       <Table.Td>
                         <Text size="sm">{formatDate(lead.created_at)}</Text>

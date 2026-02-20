@@ -9,12 +9,8 @@ import {
   getLeadEvents,
 } from '@/api/leads';
 import type { LeadCreate } from '@/types';
-import type { AxiosError } from 'axios';
+import { getErrorMessage } from '@/lib/errors';
 
-function getErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<{ detail?: string }>;
-  return axiosError.response?.data?.detail || 'Ocorreu um erro inesperado';
-}
 
 export function useLeads(page: number, pageSize: number) {
   return useQuery({

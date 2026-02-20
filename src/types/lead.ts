@@ -13,12 +13,12 @@ export interface Lead {
   city?: string;
   state?: string;
   external_id?: string;
-  first_campaign?: string;
-  campaign?: string;
-  first_advertisement?: string;
-  advertisement?: string;
-  first_tag?: string;
-  tag?: string;
+  first_campaign?: { id: string; name: string } | null;
+  campaign?: { id: string; name: string } | null;
+  first_advertisement?: { id: string; name: string } | null;
+  advertisement?: { id: string; name: string } | null;
+  first_tag?: { id: string; name: string } | null;
+  tag?: { id: string; name: string } | null;
   first_utm_source?: string;
   utm_source?: string;
   first_utm_medium?: string;

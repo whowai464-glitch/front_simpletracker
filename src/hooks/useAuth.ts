@@ -11,12 +11,8 @@ import {
   getGoogleAuthUrl,
   verify2faLogin,
 } from '@/api/auth';
-import type { AxiosError } from 'axios';
+import { getErrorMessage } from '@/lib/errors';
 
-function getErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<{ detail?: string }>;
-  return axiosError.response?.data?.detail || 'An unexpected error occurred';
-}
 
 export function useLogin() {
   const navigate = useNavigate();

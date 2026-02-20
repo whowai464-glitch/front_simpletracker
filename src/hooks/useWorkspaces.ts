@@ -14,12 +14,8 @@ import {
 } from '@/api/workspaces';
 import { useAuthStore } from '@/stores/authStore';
 import type { WorkspaceRole } from '@/types';
-import type { AxiosError } from 'axios';
+import { getErrorMessage } from '@/lib/errors';
 
-function getErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<{ detail?: string }>;
-  return axiosError.response?.data?.detail || 'Ocorreu um erro inesperado';
-}
 
 export function useWorkspaces() {
   return useQuery({

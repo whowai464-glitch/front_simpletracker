@@ -117,9 +117,9 @@ export default function LeadDetailPage() {
                 <InfoItem label="UTM Campaign" value={lead.first_utm_campaign} />
                 <InfoItem label="UTM Term" value={lead.first_utm_term} />
                 <InfoItem label="UTM Content" value={lead.first_utm_content} />
-                <InfoItem label="Campanha" value={lead.first_campaign} />
-                <InfoItem label="Tag" value={lead.first_tag} />
-                <InfoItem label="Anuncio" value={lead.first_advertisement} />
+                <InfoItem label="Campanha" value={lead.first_campaign?.name} />
+                <InfoItem label="Tag" value={lead.first_tag?.name} />
+                <InfoItem label="Anuncio" value={lead.first_advertisement?.name} />
               </Stack>
             </Grid.Col>
             <Grid.Col span={6}>
@@ -132,9 +132,9 @@ export default function LeadDetailPage() {
                 <InfoItem label="UTM Campaign" value={lead.utm_campaign} />
                 <InfoItem label="UTM Term" value={lead.utm_term} />
                 <InfoItem label="UTM Content" value={lead.utm_content} />
-                <InfoItem label="Campanha" value={lead.campaign} />
-                <InfoItem label="Tag" value={lead.tag} />
-                <InfoItem label="Anuncio" value={lead.advertisement} />
+                <InfoItem label="Campanha" value={lead.campaign?.name} />
+                <InfoItem label="Tag" value={lead.tag?.name} />
+                <InfoItem label="Anuncio" value={lead.advertisement?.name} />
               </Stack>
             </Grid.Col>
           </Grid>

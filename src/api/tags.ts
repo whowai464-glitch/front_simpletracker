@@ -77,8 +77,8 @@ export function deleteCustomParam(tagId: string, paramId: string) {
 }
 
 // Script
-export function getTagScript(tagId: string) {
+export function getTagScript(slug: string) {
   return client
-    .get<TagScript>(`/tags/${tagId}/script`)
+    .get<TagScript>(`/tags/script/${slug}.js`)
     .then((r) => r.data);
 }

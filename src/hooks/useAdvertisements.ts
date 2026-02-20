@@ -8,12 +8,8 @@ import {
   deleteAdvertisement,
 } from '@/api/advertisements';
 import type { AdvertisementUpdate } from '@/types';
-import type { AxiosError } from 'axios';
+import { getErrorMessage } from '@/lib/errors';
 
-function getErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<{ detail?: string }>;
-  return axiosError.response?.data?.detail || 'Ocorreu um erro inesperado';
-}
 
 export function useAdvertisements(businessId: string | null) {
   return useQuery({

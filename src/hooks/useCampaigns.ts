@@ -8,12 +8,8 @@ import {
   deleteCampaign,
 } from '@/api/campaigns';
 import type { CampaignUpdate } from '@/types';
-import type { AxiosError } from 'axios';
+import { getErrorMessage } from '@/lib/errors';
 
-function getErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<{ detail?: string }>;
-  return axiosError.response?.data?.detail || 'Ocorreu um erro inesperado';
-}
 
 export function useCampaigns(businessId: string | null) {
   return useQuery({

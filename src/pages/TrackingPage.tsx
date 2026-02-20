@@ -262,7 +262,7 @@ function TagsTab() {
                   </Table.Td>
                   <Table.Td>
                     <Badge variant="light" size="sm">
-                      {tag.pixels?.length ?? 0}
+                      {tag.tag_pixels?.length ?? 0}
                     </Badge>
                   </Table.Td>
                   <Table.Td>
@@ -439,6 +439,7 @@ function TagFormDrawer({
       createMutation.mutate(
         {
           name: values.name,
+          tag_type: 'redirect' as const,
           description: values.description || undefined,
           slug: values.slug || undefined,
           domain_id: values.domain_id || undefined,
@@ -465,9 +466,9 @@ function TagFormDrawer({
   };
 
   // Pixels already linked to this tag
-  const linkedPixelIds = new Set(createdTag?.pixels?.map((p) => p.id) ?? []);
+  const linkedPixelIds = new Set(createdTag?.tag_pixels?.map((tp) => tp.pixel.id) ?? []);
   // Pixel types already linked
-  const linkedTypes = new Set(createdTag?.pixels?.map((p) => p.pixel_type) ?? []);
+  const linkedTypes = new Set(createdTag?.tag_pixels?.map((tp) => tp.pixel.pixel_type) ?? []);
 
   const availablePixels = (pixels ?? []).filter(
     (p) => !linkedPixelIds.has(p.id) && !linkedTypes.has(p.pixel_type),
@@ -577,7 +578,7 @@ function TagDetailDrawer({
 }) {
   const { data: tag } = useTag(tagId);
   const { data: customParams } = useCustomParams(tagId);
-  const { data: script } = useTagScript(tagId);
+  const { data: script } = useTagScript(tag?.slug ?? null);
   const { data: domains } = useDomains(businessId);
   const { data: pixels } = usePixels(businessId);
 
@@ -612,7 +613,7 @@ function TagDetailDrawer({
     ? domains?.find((d) => d.id === tag.domain_id)?.domain ?? '—'
     : '—';
 
-  const tagPixels: Pixel[] = tag.pixels ?? [];
+  const tagPixels: Pixel[] = (tag.tag_pixels ?? []).map((tp) => tp.pixel as Pixel);
   const linkedPixelIds = new Set(tagPixels.map((p) => p.id));
   const linkedTypes = new Set(tagPixels.map((p) => p.pixel_type));
   const availablePixels = (pixels ?? []).filter(
@@ -665,10 +666,10 @@ function TagDetailDrawer({
     );
   };
 
-  const handleStartEditParam = (param: { id: string; field: string; value: string }) => {
+  const handleStartEditParam = (param: { id: string; param_key: string; param_value: string }) => {
     setEditingParamId(param.id);
     setAddingParam(false);
-    paramForm.setValues({ param_key: param.field, param_value: param.value });
+    paramForm.setValues({ param_key: param.param_key, param_value: param.param_value });
   };
 
   return (
@@ -819,8 +820,8 @@ function TagDetailDrawer({
                     </Table.Tr>
                   ) : (
                     <Table.Tr key={param.id}>
-                      <Table.Td><Text size="sm">{param.field}</Text></Table.Td>
-                      <Table.Td><Text size="sm">{param.value}</Text></Table.Td>
+                      <Table.Td><Text size="sm">{param.param_key}</Text></Table.Td>
+                      <Table.Td><Text size="sm">{param.param_value}</Text></Table.Td>
                       <Table.Td>
                         <Group gap={4}>
                           <ActionIcon

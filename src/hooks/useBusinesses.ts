@@ -8,12 +8,8 @@ import {
   deleteBusiness,
 } from '@/api/businesses';
 import type { BusinessUpdate } from '@/types';
-import type { AxiosError } from 'axios';
+import { getErrorMessage } from '@/lib/errors';
 
-function getErrorMessage(error: unknown): string {
-  const axiosError = error as AxiosError<{ detail?: string }>;
-  return axiosError.response?.data?.detail || 'Ocorreu um erro inesperado';
-}
 
 export function useBusinesses() {
   return useQuery({
