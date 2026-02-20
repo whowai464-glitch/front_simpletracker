@@ -3,6 +3,7 @@ import {
   ActionIcon,
   Badge,
   Button,
+  Checkbox,
   Code,
   CopyButton,
   Divider,
@@ -66,7 +67,7 @@ import {
 } from '@/hooks/useAdvertisements';
 import { useDomains } from '@/hooks/useDomains';
 import { usePixels } from '@/hooks/usePixels';
-import type { Tag, Pixel, PixelType, Campaign, Advertisement, TrafficSource } from '@/types';
+import type { Tag, TagType, Pixel, PixelType, Campaign, Advertisement, TrafficSource } from '@/types';
 
 const PIXEL_TYPE_COLORS: Record<PixelType, string> = {
   facebook: 'blue',
@@ -357,6 +358,12 @@ function TagsTab() {
 
 // ─── Tag Form Drawer (Create / Edit) ────────────────────────
 
+const TAG_TYPE_OPTIONS: { value: TagType; label: string }[] = [
+  { value: 'own_page', label: 'Pagina Propria' },
+  { value: 'redirect', label: 'Redirecionamento' },
+  { value: 'link_whats', label: 'Link WhatsApp' },
+];
+
 function TagFormDrawer({
   opened,
   onClose,
@@ -373,6 +380,7 @@ function TagFormDrawer({
   const createMutation = useCreateTag();
   const updateMutation = useUpdateTag();
   const addPixelMutation = useAddTagPixel();
+  const removePixelMutation = useRemoveTagPixel();
 
   const [createdTag, setCreatedTag] = useState<Tag | null>(null);
   const isEdit = !!editingTag;
@@ -380,9 +388,13 @@ function TagFormDrawer({
   const form = useForm({
     initialValues: {
       name: editingTag?.name ?? '',
+      tag_type: (editingTag?.tag_type ?? 'redirect') as string,
       description: editingTag?.description ?? '',
       slug: editingTag?.slug ?? '',
       domain_id: editingTag?.domain_id ?? '',
+      destination_url: editingTag?.destination_url ?? '',
+      whatsapp_number: editingTag?.whatsapp_number ?? '',
+      whatsapp_message: editingTag?.whatsapp_message ?? '',
     },
   });
 
@@ -390,9 +402,13 @@ function TagFormDrawer({
     if (editingTag) {
       form.setValues({
         name: editingTag.name,
+        tag_type: editingTag.tag_type,
         description: editingTag.description ?? '',
         slug: editingTag.slug,
         domain_id: editingTag.domain_id ?? '',
+        destination_url: editingTag.destination_url ?? '',
+        whatsapp_number: editingTag.whatsapp_number ?? '',
+        whatsapp_message: editingTag.whatsapp_message ?? '',
       });
     } else {
       form.reset();
@@ -426,6 +442,9 @@ function TagFormDrawer({
             name: values.name,
             description: values.description || undefined,
             slug: values.slug || undefined,
+            destination_url: values.destination_url || undefined,
+            whatsapp_number: values.whatsapp_number || undefined,
+            whatsapp_message: values.whatsapp_message || undefined,
           },
         },
         {
@@ -439,10 +458,13 @@ function TagFormDrawer({
       createMutation.mutate(
         {
           name: values.name,
-          tag_type: 'redirect' as const,
+          tag_type: values.tag_type as TagType,
           description: values.description || undefined,
           slug: values.slug || undefined,
           domain_id: values.domain_id || undefined,
+          destination_url: values.destination_url || undefined,
+          whatsapp_number: values.whatsapp_number || undefined,
+          whatsapp_message: values.whatsapp_message || undefined,
           business_id: businessId,
         },
         {
@@ -454,11 +476,6 @@ function TagFormDrawer({
     }
   });
 
-  const handleAddPixel = (pixelId: string) => {
-    if (!createdTag) return;
-    addPixelMutation.mutate({ tagId: createdTag.id, pixelId });
-  };
-
   const handleClose = () => {
     form.reset();
     setCreatedTag(null);
@@ -467,12 +484,16 @@ function TagFormDrawer({
 
   // Pixels already linked to this tag
   const linkedPixelIds = new Set(createdTag?.tag_pixels?.map((tp) => tp.pixel.id) ?? []);
-  // Pixel types already linked
   const linkedTypes = new Set(createdTag?.tag_pixels?.map((tp) => tp.pixel.pixel_type) ?? []);
 
-  const availablePixels = (pixels ?? []).filter(
-    (p) => !linkedPixelIds.has(p.id) && !linkedTypes.has(p.pixel_type),
-  );
+  const handlePixelToggle = (pixelId: string, _pixelType: string, checked: boolean) => {
+    if (!createdTag) return;
+    if (checked) {
+      addPixelMutation.mutate({ tagId: createdTag.id, pixelId });
+    } else {
+      removePixelMutation.mutate({ tagId: createdTag.id, pixelId });
+    }
+  };
 
   return (
     <Drawer
@@ -493,6 +514,14 @@ function TagFormDrawer({
               onChange={(e) => handleNameChange(e.currentTarget.value)}
               error={form.errors.name}
             />
+            <Select
+              label="Tipo"
+              placeholder="Selecione o tipo"
+              data={TAG_TYPE_OPTIONS}
+              required
+              disabled={isEdit}
+              {...form.getInputProps('tag_type')}
+            />
             <TextInput
               label="Slug"
               placeholder="slug-da-tag"
@@ -511,6 +540,27 @@ function TagFormDrawer({
               disabled={isEdit}
               {...form.getInputProps('domain_id')}
             />
+            {form.values.tag_type === 'redirect' && (
+              <TextInput
+                label="URL de destino"
+                placeholder="https://exemplo.com"
+                {...form.getInputProps('destination_url')}
+              />
+            )}
+            {form.values.tag_type === 'link_whats' && (
+              <>
+                <TextInput
+                  label="Numero WhatsApp"
+                  placeholder="5511999999999"
+                  {...form.getInputProps('whatsapp_number')}
+                />
+                <Textarea
+                  label="Mensagem WhatsApp"
+                  placeholder="Mensagem pre-definida"
+                  {...form.getInputProps('whatsapp_message')}
+                />
+              </>
+            )}
             <Button
               type="submit"
               loading={createMutation.isPending || updateMutation.isPending}
@@ -524,34 +574,27 @@ function TagFormDrawer({
           <Text fw={600}>Tag criada: {createdTag.name}</Text>
           <Divider />
           <Text size="sm" fw={500}>Vincular pixels</Text>
-          {availablePixels.length === 0 ? (
+          {!(pixels ?? []).length ? (
             <Text size="sm" c="dimmed">
               Nenhum pixel disponivel para vincular
             </Text>
           ) : (
             <Stack gap="xs">
-              {availablePixels.map((pixel) => (
-                <Group key={pixel.id} justify="space-between">
-                  <Group gap="xs">
-                    <Badge
-                      color={PIXEL_TYPE_COLORS[pixel.pixel_type]}
-                      variant="light"
-                      size="sm"
-                    >
-                      {pixel.pixel_type}
-                    </Badge>
-                    <Text size="sm">{pixel.name}</Text>
-                  </Group>
-                  <Button
-                    size="xs"
-                    variant="light"
-                    onClick={() => handleAddPixel(pixel.id)}
-                    loading={addPixelMutation.isPending}
-                  >
-                    Vincular
-                  </Button>
-                </Group>
-              ))}
+              {(pixels ?? []).map((pixel) => {
+                const isLinked = linkedPixelIds.has(pixel.id);
+                const typeConflict = !isLinked && linkedTypes.has(pixel.pixel_type);
+                return (
+                  <Checkbox
+                    key={pixel.id}
+                    label={`${pixel.name} (${pixel.pixel_type})`}
+                    checked={isLinked}
+                    disabled={typeConflict || addPixelMutation.isPending || removePixelMutation.isPending}
+                    onChange={(e) =>
+                      handlePixelToggle(pixel.id, pixel.pixel_type, e.currentTarget.checked)
+                    }
+                  />
+                );
+              })}
             </Stack>
           )}
           <Button variant="default" onClick={handleClose} mt="md">
