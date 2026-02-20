@@ -42,12 +42,23 @@ const ROLE_COLORS: Record<WorkspaceRole, string> = {
   viewer: 'gray',
 };
 
+const ROLE_LABELS: Record<WorkspaceRole, string> = {
+  owner: 'Proprietario',
+  admin: 'Administrador',
+  analyst: 'Analista',
+  viewer: 'Visualizador',
+};
+
 const ROLE_OPTIONS = [
-  { value: 'owner', label: 'Owner' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'analyst', label: 'Analyst' },
-  { value: 'viewer', label: 'Viewer' },
+  { value: 'owner', label: 'Proprietario' },
+  { value: 'admin', label: 'Administrador' },
+  { value: 'analyst', label: 'Analista' },
+  { value: 'viewer', label: 'Visualizador' },
 ];
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString('pt-BR');
+}
 
 export default function AccountPage() {
   const { data: workspaces, isLoading: wsLoading } = useWorkspaces();
@@ -163,7 +174,7 @@ export default function AccountPage() {
                           variant="light"
                           size="sm"
                         >
-                          {member.role}
+                          {ROLE_LABELS[member.role]}
                         </Badge>
                       </Table.Td>
                       <Table.Td>
@@ -210,57 +221,88 @@ export default function AccountPage() {
               icon={<IconMail size={48} color="gray" />}
             />
           ) : (
-            <Table.ScrollContainer minWidth={500}>
+            <Table.ScrollContainer minWidth={700}>
               <Table striped highlightOnHover>
                 <Table.Thead>
                   <Table.Tr>
                     <Table.Th>Email</Table.Th>
                     <Table.Th>Papel</Table.Th>
+                    <Table.Th>Convidado por</Table.Th>
+                    <Table.Th>Data convite</Table.Th>
+                    <Table.Th>Expira em</Table.Th>
                     <Table.Th>Status</Table.Th>
                     <Table.Th>Acoes</Table.Th>
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {invitations.map((invitation) => (
-                    <Table.Tr key={invitation.id}>
-                      <Table.Td>
-                        <Text size="sm" fw={500}>
-                          {invitation.invited_email}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge
-                          color={ROLE_COLORS[invitation.role]}
-                          variant="light"
-                          size="sm"
-                        >
-                          {invitation.role}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Badge
-                          color={!invitation.is_revoked && new Date(invitation.expires_at) > new Date() ? 'green' : 'red'}
-                          variant="light"
-                          size="sm"
-                        >
-                          {invitation.is_revoked ? 'Revogado' : new Date(invitation.expires_at) > new Date() ? 'Valido' : 'Expirado'}
-                        </Badge>
-                      </Table.Td>
-                      <Table.Td>
-                        <Tooltip label="Revogar">
-                          <ActionIcon
+                  {invitations.map((invitation) => {
+                    const statusLabel = invitation.is_accepted
+                      ? 'Aceito'
+                      : invitation.is_revoked
+                        ? 'Revogado'
+                        : new Date(invitation.expires_at) > new Date()
+                          ? 'Pendente'
+                          : 'Expirado';
+                    const statusColor = invitation.is_accepted
+                      ? 'green'
+                      : invitation.is_revoked
+                        ? 'red'
+                        : new Date(invitation.expires_at) > new Date()
+                          ? 'yellow'
+                          : 'gray';
+                    const canRevoke = !invitation.is_accepted && !invitation.is_revoked;
+                    return (
+                      <Table.Tr key={invitation.id}>
+                        <Table.Td>
+                          <Text size="sm" fw={500}>
+                            {invitation.invited_email}
+                          </Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge
+                            color={ROLE_COLORS[invitation.role]}
                             variant="light"
-                            color="red"
                             size="sm"
-                            onClick={() => handleRevokeInvitation(invitation.id)}
-                            loading={deleteInvitationMutation.isPending}
                           >
-                            <IconTrash size={14} />
-                          </ActionIcon>
-                        </Tooltip>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
+                            {ROLE_LABELS[invitation.role]}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm">{invitation.invited_by_name}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm">{formatDate(invitation.created_at)}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm">{formatDate(invitation.expires_at)}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge
+                            color={statusColor}
+                            variant="light"
+                            size="sm"
+                          >
+                            {statusLabel}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          {canRevoke && (
+                            <Tooltip label="Revogar">
+                              <ActionIcon
+                                variant="light"
+                                color="red"
+                                size="sm"
+                                onClick={() => handleRevokeInvitation(invitation.id)}
+                                loading={deleteInvitationMutation.isPending}
+                              >
+                                <IconTrash size={14} />
+                              </ActionIcon>
+                            </Tooltip>
+                          )}
+                        </Table.Td>
+                      </Table.Tr>
+                    );
+                  })}
                 </Table.Tbody>
               </Table>
             </Table.ScrollContainer>
