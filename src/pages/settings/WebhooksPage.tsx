@@ -44,10 +44,6 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('pt-BR');
 }
 
-const PROVIDER_OPTIONS = [
-  { value: 'hotmart', label: 'Hotmart' },
-];
-
 export default function WebhooksPage() {
   const businessId = useSelectedBusinessId();
   const { data: webhooks, isLoading } = useWebhooks(businessId);
@@ -64,7 +60,7 @@ export default function WebhooksPage() {
   const tagOptions = (tags ?? []).map((t) => ({ value: t.id, label: t.name }));
 
   const form = useForm({
-    initialValues: { name: '', tag_id: '', provider: 'hotmart', url: '', is_active: true },
+    initialValues: { name: '', tag_id: '' },
     validate: {
       name: (v) => (v.trim() ? null : 'Nome obrigatorio'),
       tag_id: (v) => (v ? null : 'Tag obrigatoria'),
@@ -82,9 +78,6 @@ export default function WebhooksPage() {
     form.setValues({
       name: webhook.name,
       tag_id: webhook.tag?.id ?? '',
-      provider: webhook.provider,
-      url: webhook.url ?? '',
-      is_active: webhook.is_active,
     });
     openDrawer();
   };
@@ -102,7 +95,7 @@ export default function WebhooksPage() {
       updateMutation.mutate(
         {
           id: editingWebhook.id,
-          data: { name: values.name, tag_id: values.tag_id, is_active: values.is_active },
+          data: { name: values.name, tag_id: values.tag_id },
         },
         { onSuccess: handleCloseDrawer },
       );
@@ -112,7 +105,7 @@ export default function WebhooksPage() {
           name: values.name,
           tag_id: values.tag_id,
           business_id: businessId,
-          provider: values.provider as 'hotmart' | 'custom',
+          provider: 'hotmart' as const,
         },
         { onSuccess: handleCloseDrawer },
       );
@@ -309,18 +302,18 @@ export default function WebhooksPage() {
               searchable
               {...form.getInputProps('tag_id')}
             />
-            {!editingWebhook && (
-              <Select
-                label="Provider"
-                data={PROVIDER_OPTIONS}
-                {...form.getInputProps('provider')}
+            {editingWebhook && (
+              <Switch
+                label="Ativo"
+                checked={editingWebhook.is_active}
+                onChange={(e) =>
+                  updateMutation.mutate({
+                    id: editingWebhook.id,
+                    data: { is_active: e.currentTarget.checked },
+                  })
+                }
               />
             )}
-            <Switch
-              label="Ativo"
-              checked={form.values.is_active}
-              onChange={(e) => form.setFieldValue('is_active', e.currentTarget.checked)}
-            />
             <Button
               type="submit"
               loading={createMutation.isPending || updateMutation.isPending}
