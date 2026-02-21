@@ -1,14 +1,10 @@
 export type TrafficSource =
-  | 'meta_ads'
-  | 'google_ads'
-  | 'tiktok_ads'
-  | 'kwai_ads'
+  | 'meta'
+  | 'tiktok'
+  | 'google'
   | 'organic'
-  | 'direct'
-  | 'email'
-  | 'referral'
-  | 'other'
-  | (string & {});
+  | 'direct_traffic'
+  | 'whatsapp';
 
 export interface Advertisement {
   id: string;

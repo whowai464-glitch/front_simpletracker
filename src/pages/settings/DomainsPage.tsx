@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import {
   Alert,
   Badge,
@@ -50,6 +50,7 @@ export default function DomainsPage() {
   const [deleteModalOpened, { open: openDeleteModal, close: closeDeleteModal }] = useDisclosure();
   const [domainToDelete, setDomainToDelete] = useState<string | null>(null);
   const [createdDomain, setCreatedDomain] = useState<Domain | null>(null);
+  const [syncingId, setSyncingId] = useState<string | null>(null);
 
   const form = useForm({
     initialValues: { domain: '', subdomain: '' },
@@ -98,11 +99,15 @@ export default function DomainsPage() {
   };
 
   const handleSync = (id: string) => {
+    setSyncingId(id);
     syncMutation.mutate(id, {
       onSuccess: (updated) => {
         if (createdDomain?.id === id) {
           setCreatedDomain(updated);
         }
+      },
+      onSettled: () => {
+        setSyncingId(null);
       },
     });
   };
@@ -169,68 +174,145 @@ export default function DomainsPage() {
                 </Table.Tr>
               </Table.Thead>
               <Table.Tbody>
-                {domains.map((domain) => (
-                  <Table.Tr key={domain.id}>
-                    <Table.Td>
-                      <Text size="sm" fw={500}>
-                        {domain.domain}
-                      </Text>
-                      {domain.subdomain && (
-                        <Text size="xs" c="dimmed">
-                          sub: {domain.subdomain}
-                        </Text>
+                {domains.map((domain) => {
+                  const isPending = domain.hostname_status === 'pending';
+                  return (
+                    <Fragment key={domain.id}>
+                      <Table.Tr>
+                        <Table.Td>
+                          <Text size="sm" fw={500}>
+                            {domain.domain}
+                          </Text>
+                          {domain.subdomain && (
+                            <Text size="xs" c="dimmed">
+                              sub: {domain.subdomain}
+                            </Text>
+                          )}
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm">{domain.full_hostname}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge
+                            color={getHostnameStatusColor(domain.hostname_status)}
+                            variant="light"
+                            size="sm"
+                          >
+                            {domain.hostname_status}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Badge
+                            color={getCertificateStatusColor(domain.certificate_status)}
+                            variant="light"
+                            size="sm"
+                          >
+                            {domain.certificate_status}
+                          </Badge>
+                        </Table.Td>
+                        <Table.Td>
+                          <Text size="sm">{formatDate(domain.created_at)}</Text>
+                        </Table.Td>
+                        <Table.Td>
+                          <Group gap="xs">
+                            <Tooltip label="Sincronizar DNS">
+                              <ActionIcon
+                                variant="light"
+                                size="sm"
+                                onClick={() => handleSync(domain.id)}
+                                loading={syncingId === domain.id}
+                              >
+                                <IconRefresh size={14} />
+                              </ActionIcon>
+                            </Tooltip>
+                            <Tooltip label="Excluir">
+                              <ActionIcon
+                                variant="light"
+                                color="red"
+                                size="sm"
+                                onClick={() => handleDelete(domain.id)}
+                              >
+                                <IconTrash size={14} />
+                              </ActionIcon>
+                            </Tooltip>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                      {isPending && (
+                        <Table.Tr>
+                          <Table.Td colSpan={6} style={{ background: 'var(--mantine-color-gray-0)', padding: '12px 16px' }}>
+                            <Stack gap="sm">
+                              {domain.verification_errors && (
+                                <Alert color="red" variant="light">
+                                  {domain.verification_errors}
+                                </Alert>
+                              )}
+                              {domain.txt_name && domain.txt_value && (
+                                <Paper withBorder p="sm" radius="sm">
+                                  <Text size="xs" fw={600} mb="xs">
+                                    Registro TXT (verificacao)
+                                  </Text>
+                                  <Group gap="lg">
+                                    <Group gap="xs">
+                                      <div>
+                                        <Text size="xs" c="dimmed">Nome</Text>
+                                        <Code>{domain.txt_name}</Code>
+                                      </div>
+                                      <CopyButton value={domain.txt_name}>
+                                        {({ copied, copy }) => (
+                                          <Tooltip label={copied ? 'Copiado' : 'Copiar'}>
+                                            <ActionIcon variant="light" size="xs" onClick={copy} color={copied ? 'green' : 'gray'}>
+                                              {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+                                            </ActionIcon>
+                                          </Tooltip>
+                                        )}
+                                      </CopyButton>
+                                    </Group>
+                                    <Group gap="xs">
+                                      <div>
+                                        <Text size="xs" c="dimmed">Valor</Text>
+                                        <Code style={{ wordBreak: 'break-all' }}>{domain.txt_value}</Code>
+                                      </div>
+                                      <CopyButton value={domain.txt_value}>
+                                        {({ copied, copy }) => (
+                                          <Tooltip label={copied ? 'Copiado' : 'Copiar'}>
+                                            <ActionIcon variant="light" size="xs" onClick={copy} color={copied ? 'green' : 'gray'}>
+                                              {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+                                            </ActionIcon>
+                                          </Tooltip>
+                                        )}
+                                      </CopyButton>
+                                    </Group>
+                                  </Group>
+                                </Paper>
+                              )}
+                              <Paper withBorder p="sm" radius="sm">
+                                <Text size="xs" fw={600} mb="xs">
+                                  Registro CNAME
+                                </Text>
+                                <Group gap="xs">
+                                  <Text size="xs">
+                                    Crie um registro CNAME apontando <Code>{domain.full_hostname}</Code> para{' '}
+                                    <Code>proxy.simpletracker.tech</Code>
+                                  </Text>
+                                  <CopyButton value="proxy.simpletracker.tech">
+                                    {({ copied, copy }) => (
+                                      <Tooltip label={copied ? 'Copiado' : 'Copiar'}>
+                                        <ActionIcon variant="light" size="xs" onClick={copy} color={copied ? 'green' : 'gray'}>
+                                          {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+                                        </ActionIcon>
+                                      </Tooltip>
+                                    )}
+                                  </CopyButton>
+                                </Group>
+                              </Paper>
+                            </Stack>
+                          </Table.Td>
+                        </Table.Tr>
                       )}
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size="sm">{domain.full_hostname}</Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge
-                        color={getHostnameStatusColor(domain.hostname_status)}
-                        variant="light"
-                        size="sm"
-                      >
-                        {domain.hostname_status}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Badge
-                        color={getCertificateStatusColor(domain.certificate_status)}
-                        variant="light"
-                        size="sm"
-                      >
-                        {domain.certificate_status}
-                      </Badge>
-                    </Table.Td>
-                    <Table.Td>
-                      <Text size="sm">{formatDate(domain.created_at)}</Text>
-                    </Table.Td>
-                    <Table.Td>
-                      <Group gap="xs">
-                        <Tooltip label="Sincronizar DNS">
-                          <ActionIcon
-                            variant="light"
-                            size="sm"
-                            onClick={() => handleSync(domain.id)}
-                            loading={syncMutation.isPending}
-                          >
-                            <IconRefresh size={14} />
-                          </ActionIcon>
-                        </Tooltip>
-                        <Tooltip label="Excluir">
-                          <ActionIcon
-                            variant="light"
-                            color="red"
-                            size="sm"
-                            onClick={() => handleDelete(domain.id)}
-                          >
-                            <IconTrash size={14} />
-                          </ActionIcon>
-                        </Tooltip>
-                      </Group>
-                    </Table.Td>
-                  </Table.Tr>
-                ))}
+                    </Fragment>
+                  );
+                })}
               </Table.Tbody>
             </Table>
           </Table.ScrollContainer>
@@ -268,7 +350,7 @@ export default function DomainsPage() {
           <DnsInstructions
             domain={createdDomain}
             onSync={() => handleSync(createdDomain.id)}
-            syncing={syncMutation.isPending}
+            syncing={syncingId === createdDomain.id}
           />
         )}
       </Drawer>
@@ -377,11 +459,15 @@ function DnsInstructions({
 
       <Paper withBorder p="md" radius="md">
         <Text size="sm" fw={600} mb="xs">
-          Hostname
+          Registro CNAME
+        </Text>
+        <Text size="sm" mb="xs">
+          Crie um registro CNAME apontando <Code>{domain.full_hostname}</Code> para{' '}
+          <Code>proxy.simpletracker.tech</Code>
         </Text>
         <Group justify="space-between">
-          <Code>{domain.full_hostname}</Code>
-          <CopyButton value={domain.full_hostname}>
+          <Code>proxy.simpletracker.tech</Code>
+          <CopyButton value="proxy.simpletracker.tech">
             {({ copied, copy }) => (
               <Tooltip label={copied ? 'Copiado' : 'Copiar'}>
                 <ActionIcon
