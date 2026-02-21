@@ -81,27 +81,21 @@ const PIXEL_TYPE_COLORS: Record<PixelType, string> = {
 };
 
 const TRAFFIC_SOURCE_COLORS: Record<string, string> = {
-  google_ads: 'red',
-  meta_ads: 'blue',
-  tiktok_ads: 'dark',
-  kwai_ads: 'orange',
+  meta: 'blue',
+  tiktok: 'dark',
+  google: 'red',
   organic: 'green',
-  direct: 'violet',
-  email: 'cyan',
-  referral: 'orange',
-  other: 'gray',
+  direct_traffic: 'violet',
+  whatsapp: 'teal',
 };
 
 const TRAFFIC_SOURCE_OPTIONS: { value: string; label: string }[] = [
-  { value: 'google_ads', label: 'Google Ads' },
-  { value: 'meta_ads', label: 'Meta Ads' },
-  { value: 'tiktok_ads', label: 'TikTok Ads' },
-  { value: 'kwai_ads', label: 'Kwai Ads' },
+  { value: 'meta', label: 'Meta' },
+  { value: 'tiktok', label: 'TikTok' },
+  { value: 'google', label: 'Google' },
   { value: 'organic', label: 'Organico' },
-  { value: 'direct', label: 'Direto' },
-  { value: 'email', label: 'Email' },
-  { value: 'referral', label: 'Referencia' },
-  { value: 'other', label: 'Outro' },
+  { value: 'direct_traffic', label: 'Trafego Direto' },
+  { value: 'whatsapp', label: 'WhatsApp' },
 ];
 
 function formatDate(dateStr: string) {
@@ -1140,7 +1134,6 @@ function TagDetailDrawer({
 function CampaignsTab() {
   const businessId = useSelectedBusinessId();
   const { data: campaigns, isLoading } = useCampaigns(businessId);
-  const { data: tags } = useTags(businessId);
   const createMutation = useCreateCampaign();
   const updateMutation = useUpdateCampaign();
   const deleteMutation = useDeleteCampaign();
@@ -1151,7 +1144,7 @@ function CampaignsTab() {
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
 
   const form = useForm({
-    initialValues: { name: '', description: '', tag_id: '' },
+    initialValues: { name: '', description: '' },
     validate: {
       name: (v) => (v.trim() ? null : 'Nome obrigatorio'),
     },
@@ -1168,7 +1161,6 @@ function CampaignsTab() {
     form.setValues({
       name: campaign.name,
       description: campaign.description ?? '',
-      tag_id: '',
     });
     openDrawer();
   };
@@ -1198,7 +1190,6 @@ function CampaignsTab() {
         {
           name: values.name,
           description: values.description || undefined,
-          tag_id: values.tag_id || undefined,
           business_id: businessId,
         },
         { onSuccess: handleCloseDrawer },
@@ -1221,8 +1212,6 @@ function CampaignsTab() {
       });
     }
   };
-
-  const tagOptions = (tags ?? []).map((t) => ({ value: t.id, label: t.name }));
 
   if (!businessId) {
     return (
@@ -1323,15 +1312,6 @@ function CampaignsTab() {
               placeholder="Descricao opcional"
               {...form.getInputProps('description')}
             />
-            {!editingCampaign && (
-              <Select
-                label="Tag"
-                placeholder="Selecione uma tag (opcional)"
-                data={tagOptions}
-                clearable
-                {...form.getInputProps('tag_id')}
-              />
-            )}
             <Button
               type="submit"
               loading={createMutation.isPending || updateMutation.isPending}
