@@ -15,6 +15,12 @@ export function useDomains(businessId: string | null) {
     queryKey: ['domains', businessId],
     queryFn: () => listDomains(businessId!),
     enabled: !!businessId,
+    refetchInterval: (query) => {
+      const domains = query.state.data;
+      if (!domains?.length) return false;
+      const hasPending = domains.some((d) => d.hostname_status === 'pending');
+      return hasPending ? 30_000 : false;
+    },
   });
 }
 
