@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import {
   ActionIcon,
+  Badge,
   Button,
+  Code,
+  CopyButton,
   Drawer,
   Group,
   Modal,
@@ -18,6 +21,8 @@ import {
 import { useForm } from '@mantine/form';
 import { useDisclosure } from '@mantine/hooks';
 import {
+  IconCheck,
+  IconCopy,
   IconEdit,
   IconPlus,
   IconTrash,
@@ -32,27 +37,21 @@ import {
   useUpdateWebhook,
   useDeleteWebhook,
 } from '@/hooks/useWebhooks';
+import { useTags } from '@/hooks/useTags';
 import type { Webhook } from '@/types';
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('pt-BR');
 }
 
-const EVENT_TYPE_OPTIONS = [
-  { value: 'lead_created', label: 'Lead criado' },
-  { value: 'lead_updated', label: 'Lead atualizado' },
-  { value: 'event_received', label: 'Evento recebido' },
+const PROVIDER_OPTIONS = [
+  { value: 'hotmart', label: 'Hotmart' },
 ];
-
-const EVENT_TYPE_LABELS: Record<string, string> = {
-  lead_created: 'Lead criado',
-  lead_updated: 'Lead atualizado',
-  event_received: 'Evento recebido',
-};
 
 export default function WebhooksPage() {
   const businessId = useSelectedBusinessId();
   const { data: webhooks, isLoading } = useWebhooks(businessId);
+  const { data: tags } = useTags(businessId);
   const createMutation = useCreateWebhook();
   const updateMutation = useUpdateWebhook();
   const deleteMutation = useDeleteWebhook();
@@ -62,19 +61,13 @@ export default function WebhooksPage() {
   const [editingWebhook, setEditingWebhook] = useState<Webhook | null>(null);
   const [webhookToDelete, setWebhookToDelete] = useState<string | null>(null);
 
+  const tagOptions = (tags ?? []).map((t) => ({ value: t.id, label: t.name }));
+
   const form = useForm({
-    initialValues: { event_type: '', url: '', is_active: true },
+    initialValues: { name: '', tag_id: '', provider: 'hotmart', url: '', is_active: true },
     validate: {
-      event_type: (v) => (v ? null : 'Tipo de evento obrigatorio'),
-      url: (v) => {
-        if (!v.trim()) return 'URL obrigatoria';
-        try {
-          new URL(v);
-          return null;
-        } catch {
-          return 'URL invalida';
-        }
-      },
+      name: (v) => (v.trim() ? null : 'Nome obrigatorio'),
+      tag_id: (v) => (v ? null : 'Tag obrigatoria'),
     },
   });
 
@@ -87,8 +80,10 @@ export default function WebhooksPage() {
   const handleOpenEdit = (webhook: Webhook) => {
     setEditingWebhook(webhook);
     form.setValues({
-      event_type: webhook.event_type,
-      url: webhook.url,
+      name: webhook.name,
+      tag_id: webhook.tag?.id ?? '',
+      provider: webhook.provider,
+      url: webhook.url ?? '',
       is_active: webhook.is_active,
     });
     openDrawer();
@@ -105,12 +100,20 @@ export default function WebhooksPage() {
 
     if (editingWebhook) {
       updateMutation.mutate(
-        { id: editingWebhook.id, data: values },
+        {
+          id: editingWebhook.id,
+          data: { name: values.name, tag_id: values.tag_id, is_active: values.is_active },
+        },
         { onSuccess: handleCloseDrawer },
       );
     } else {
       createMutation.mutate(
-        { ...values, business_id: businessId },
+        {
+          name: values.name,
+          tag_id: values.tag_id,
+          business_id: businessId,
+          provider: values.provider as 'hotmart' | 'custom',
+        },
         { onSuccess: handleCloseDrawer },
       );
     }
@@ -159,14 +162,16 @@ export default function WebhooksPage() {
 
       <Paper withBorder radius="md">
         {isLoading ? (
-          <Table.ScrollContainer minWidth={600}>
+          <Table.ScrollContainer minWidth={800}>
             <Table>
               <Table.Tbody>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Table.Tr key={i}>
                     <Table.Td><Skeleton height={16} /></Table.Td>
+                    <Table.Td><Skeleton height={16} width={60} /></Table.Td>
                     <Table.Td><Skeleton height={16} /></Table.Td>
-                    <Table.Td><Skeleton height={16} width={50} /></Table.Td>
+                    <Table.Td><Skeleton height={16} /></Table.Td>
+                    <Table.Td><Skeleton height={16} width={40} /></Table.Td>
                     <Table.Td><Skeleton height={16} /></Table.Td>
                     <Table.Td><Skeleton height={16} width={50} /></Table.Td>
                   </Table.Tr>
@@ -180,12 +185,14 @@ export default function WebhooksPage() {
             icon={<IconWebhook size={48} color="gray" />}
           />
         ) : (
-          <Table.ScrollContainer minWidth={600}>
+          <Table.ScrollContainer minWidth={800}>
             <Table striped highlightOnHover>
               <Table.Thead>
                 <Table.Tr>
-                  <Table.Th>Tipo de Evento</Table.Th>
-                  <Table.Th>URL</Table.Th>
+                  <Table.Th>Nome</Table.Th>
+                  <Table.Th>Provider</Table.Th>
+                  <Table.Th>Tag</Table.Th>
+                  <Table.Th>URL / Token</Table.Th>
                   <Table.Th>Status</Table.Th>
                   <Table.Th>Data</Table.Th>
                   <Table.Th>Acoes</Table.Th>
@@ -195,14 +202,41 @@ export default function WebhooksPage() {
                 {webhooks.map((webhook) => (
                   <Table.Tr key={webhook.id}>
                     <Table.Td>
-                      <Text size="sm" fw={500}>
-                        {EVENT_TYPE_LABELS[webhook.event_type] ?? webhook.event_type}
-                      </Text>
+                      <Text size="sm" fw={500}>{webhook.name}</Text>
                     </Table.Td>
                     <Table.Td>
-                      <Text size="sm" truncate maw={300}>
-                        {webhook.url}
-                      </Text>
+                      <Badge variant="light" size="sm">
+                        {webhook.provider}
+                      </Badge>
+                    </Table.Td>
+                    <Table.Td>
+                      <Text size="sm">{webhook.tag?.name ?? '—'}</Text>
+                    </Table.Td>
+                    <Table.Td>
+                      <Stack gap={4}>
+                        {webhook.url && (
+                          <Text size="xs" truncate maw={250}>{webhook.url}</Text>
+                        )}
+                        <Group gap="xs">
+                          <Code style={{ fontSize: 11 }}>
+                            {webhook.webhook_token}
+                          </Code>
+                          <CopyButton value={webhook.webhook_token}>
+                            {({ copied, copy }) => (
+                              <Tooltip label={copied ? 'Copiado' : 'Copiar token'}>
+                                <ActionIcon
+                                  variant="subtle"
+                                  size="xs"
+                                  onClick={copy}
+                                  color={copied ? 'green' : 'gray'}
+                                >
+                                  {copied ? <IconCheck size={12} /> : <IconCopy size={12} />}
+                                </ActionIcon>
+                              </Tooltip>
+                            )}
+                          </CopyButton>
+                        </Group>
+                      </Stack>
                     </Table.Td>
                     <Table.Td>
                       <Switch
@@ -261,20 +295,27 @@ export default function WebhooksPage() {
       >
         <form onSubmit={handleSubmit}>
           <Stack>
-            <Select
-              label="Tipo de Evento"
-              placeholder="Selecione o tipo"
-              data={EVENT_TYPE_OPTIONS}
-              required
-              disabled={!!editingWebhook}
-              {...form.getInputProps('event_type')}
-            />
             <TextInput
-              label="URL"
-              placeholder="https://exemplo.com/webhook"
+              label="Nome"
+              placeholder="Nome do webhook"
               required
-              {...form.getInputProps('url')}
+              {...form.getInputProps('name')}
             />
+            <Select
+              label="Tag"
+              placeholder="Selecione a tag"
+              data={tagOptions}
+              required
+              searchable
+              {...form.getInputProps('tag_id')}
+            />
+            {!editingWebhook && (
+              <Select
+                label="Provider"
+                data={PROVIDER_OPTIONS}
+                {...form.getInputProps('provider')}
+              />
+            )}
             <Switch
               label="Ativo"
               checked={form.values.is_active}

@@ -1,22 +1,31 @@
+export type WebhookProvider = 'hotmart' | 'custom';
+
 export interface Webhook {
   id: string;
-  business_id: string;
-  event_type: string;
+  name: string;
+  workspace_id: string;
+  provider: WebhookProvider;
+  webhook_token: string;
   url: string;
   is_active: boolean;
+  business?: { id: string; name: string };
+  tag?: { id: string; name: string; slug: string; is_active: boolean };
   created_at: string;
   updated_at: string;
 }
 
 export interface WebhookCreate {
+  name: string;
+  tag_id: string;
   business_id: string;
-  event_type: string;
-  url: string;
+  provider?: WebhookProvider;
+  url?: string;
   is_active?: boolean;
 }
 
 export interface WebhookUpdate {
-  event_type?: string;
-  url?: string;
+  name?: string;
+  business_id?: string;
+  tag_id?: string;
   is_active?: boolean;
 }
